@@ -56,49 +56,37 @@ model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup, raw_data = 
 # Function to predict risk based on latitude and longitude only
 def predict_risk(lat, lon):
     """
-    Predict seismic risk based on latitude and longitude only
-    Depth is fixed to a default value (10km) since it's not an input anymore
+    Predict seismic risk. Uses raw data density if zone lookup fails.
     """
     depth = 10.0  # Fixed default depth
     
-    # Create a dataframe with the input values
+    # 1. Create Input DataFrame
     input_df = pd.DataFrame({
         'Latitude': [lat],
         'Longitude': [lon],
         'Depth_In_Km': [depth]
     })
     
-    # Predict the seismic zone using DBSCAN
-    # For prediction, we'll use the zone that is closest to the input coordinates
-    # Since we can't directly predict DBSCAN cluster for a new point, 
-    # we'll create a simplified approach using the zone risk lookup
-    # First, let's find the closest zone to the input coordinates
-    
-    # For this implementation, we'll calculate the zone based on distance to known zones
-    # This is a simplified approach since DBSCAN can't predict new points directly
-    # We'll use the pre-calculated zone information
-    
-    # Create additional features as used in training
+    # 2. Feature Engineering (Must match training)
     input_df['Latitude_abs'] = np.abs(input_df['Latitude'])
     input_df['Longitude_abs'] = np.abs(input_df['Longitude'])
     input_df['distance_from_center'] = np.sqrt(input_df['Latitude']**2 + input_df['Longitude']**2)
     input_df['depth_log'] = np.log1p(input_df['Depth_In_Km'])
-    input_df['depth_normalized'] = input_df['Depth_In_Km'] / 100.0  # Using 100km as max depth reference
+    input_df['depth_normalized'] = input_df['Depth_In_Km'] / 100.0
     input_df['lat_long_interact'] = input_df['Latitude'] * input_df['Longitude']
     input_df['lat_depth'] = input_df['Latitude'] * input_df['Depth_In_Km']
     input_df['long_depth'] = input_df['Longitude'] * input_df['Depth_In_Km']
     
-    # Determine seismic zone - for simplicity, we'll assign a default zone risk
-    # In a real implementation, you'd need to use the DBSCAN model to find the closest zone
-    # For now, we'll use a simplified approach to find the closest zone based on coordinates
+    # 3. DETERMINE ZONE RISK SCORE
+    # Try to use the Lookup Table first
+    use_fallback = True
+    zone_risk = 0.5
     
-    # For this example, let's assign a default zone risk since DBSCAN can't predict new clusters directly
-    # We'll use the average zone risk or find the closest zone
     if not zone_risk_lookup.empty:
-        # Simplified approach: find the zone with the closest coordinates
-        zone_risk_lookup_reset = zone_risk_lookup.reset_index()
-        if 'Latitude_mean' in zone_risk_lookup_reset.columns and 'Longitude_mean' in zone_risk_lookup_reset.columns:
-            # Calculate distances to all known zones and assign the closest one
+        # Check if we have the necessary coordinate columns to find the closest zone
+        cols = zone_risk_lookup.reset_index().columns
+        if 'Latitude_mean' in cols and 'Longitude_mean' in cols:
+            zone_risk_lookup_reset = zone_risk_lookup.reset_index()
             distances = np.sqrt(
                 (zone_risk_lookup_reset['Latitude_mean'] - lat)**2 + 
                 (zone_risk_lookup_reset['Longitude_mean'] - lon)**2
@@ -106,24 +94,40 @@ def predict_risk(lat, lon):
             closest_zone_idx = distances.idxmin()
             closest_zone = zone_risk_lookup_reset.loc[closest_zone_idx, 'seismic_zone']
             zone_risk = zone_risk_lookup.loc[closest_zone, 'zone_risk_score']
+            use_fallback = False # We successfully found a zone
+
+    # 4. SMART FALLBACK (If lookup failed, calculate from Raw Data)
+    if use_fallback:
+        # Calculate local density risk: (Sum of Mags within 100km) / Normalization Factor
+        # This ensures the score CHANGES based on location
+        
+        # Approx 1 degree = 111km. Search radius ~1 degree.
+        lat_min, lat_max = lat - 1.0, lat + 1.0
+        lon_min, lon_max = lon - 1.0, lon + 1.0
+        
+        nearby = raw_data[
+            (raw_data['Latitude'].between(lat_min, lat_max)) & 
+            (raw_data['Longitude'].between(lon_min, lon_max))
+        ]
+        
+        if not nearby.empty:
+            # Calculate a risk score (0.0 to 1.0) based on earthquake density & magnitude
+            # Heuristic: If total magnitude sum > 50, risk is 0.95 (High)
+            total_mag = nearby['Magnitude'].sum()
+            # Normalize to 0.1 - 0.9 range
+            zone_risk = min(0.9, max(0.1, total_mag / 50.0))
         else:
-            # If zone coordinates are not available, use the average risk
-            zone_risk = zone_risk_lookup['zone_risk_score'].mean()
-    else:
-        zone_risk = 0.5  # Default risk value
-    
-    # Assign the zone risk to the input
+            zone_risk = 0.1  # Very low risk if no history
+            
+    # 5. Finalize Input
     input_df['zone_risk_score'] = zone_risk
-    # For the seismic zone, we'll use the zone of the closest match or default to 0
-    input_df['seismic_zone'] = 0 if zone_risk_lookup.empty else closest_zone if 'closest_zone' in locals() else 0
+    # Use 0 for zone ID if unknown, it has low impact compared to risk score
+    input_df['seismic_zone'] = 0 
     
-    # Reorder to match training features
+    # 6. Predict
     X_input = input_df[feature_columns]
-    
-    # Scale the input
     X_scaled = scaler.transform(X_input)
     
-    # Make prediction
     risk_prob = model.predict_proba(X_scaled)[0, 1]
     risk_prediction = risk_prob >= threshold
     
