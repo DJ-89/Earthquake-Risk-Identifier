@@ -249,11 +249,11 @@ if st.session_state.risk_result is not None:
     res = st.session_state.risk_result
     prob = res['probability']
     
-    # 1. PRE-CALCULATE LOGIC (So it works for both Dashboard and Map)
+    # 1. PRE-CALCULATE LOGIC
     if prob >= 0.60:
         risk_label = "HIGH RISK"
-        risk_color = "#ff4b4b"  # Hex for text
-        color_code = "red"      # Name for Folium marker
+        risk_color = "#ff4b4b"
+        color_code = "red"
         risk_msg = f"The location **({res['lat']}, {res['lon']})** is in a critical seismic zone."
     elif prob >= 0.30:
         risk_label = "MEDIUM RISK"
@@ -266,22 +266,23 @@ if st.session_state.risk_result is not None:
         color_code = "green"
         risk_msg = f"The location **({res['lat']}, {res['lon']})** appears relatively stable."
 
+    # 2. PRE-CALCULATE DATA (So it works for all tabs)
+    nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
+
     st.divider()
 
-    # 2. CREATE TABS
+    # 3. CREATE TABS
     tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🗺️ Interactive Map", "📜 History Data"])
 
     # --- TAB 1: DASHBOARD ---
-    # --- TAB 1: DASHBOARD ---
     with tab1:
-        # 1. Create columns inside the tab
         col_kpi, col_gauge = st.columns([1, 1])
 
-        # 2. Fill the LEFT column
+        # LEFT COLUMN
         with col_kpi:
             st.subheader("Analysis Result")
             
-            # Status Box (Red/Orange/Green)
+            # Status Box
             if prob >= 0.60:
                 with st.container(border=True): 
                     st.error("### ⚠️ HIGH RISK DETECTED")
@@ -297,7 +298,7 @@ if st.session_state.risk_result is not None:
 
             st.markdown("---")
             
-            
+            # Metric Card
             st.metric(
                 label="Zone Risk Score", 
                 value=f"{res['zone_risk']:.1%}", 
@@ -305,105 +306,97 @@ if st.session_state.risk_result is not None:
                 delta_color="off"
             )
 
-        # 3. Fill the RIGHT column
+        # RIGHT COLUMN
         with col_gauge:
             st.plotly_chart(create_gauge(prob), use_container_width=True)
 
-
-    st.markdown("---")
-    st.subheader("📋 Recommended Safety Actions")
-    
-    # Define advice based on risk level
-    if prob >= 0.60:
-        with st.expander("🚨 CRITICAL PRECAUTIONS (Click to Expand)", expanded=True):
-            st.markdown("""
-            * **Structural Check:** Immediately consult a structural engineer to inspect your building's integrity.
-            * **Emergency Kit:** Ensure a "Go Bag" is packed (water, non-perishable food, flashlight, first aid).
-            * **Drills:** Conduct earthquake drills with family/employees weekly.
-            * **Furniture:** Secure tall furniture (bookshelves, cabinets) to walls.
-            """)
-    elif prob >= 0.30:
-        with st.expander("⚠️ PRECAUTIONARY MEASURES (Click to Expand)", expanded=True):
-            st.markdown("""
-            * **Review Hazards:** Check for hanging objects above beds or workspaces.
-            * **Communication Plan:** Agree on a meeting point for your family in case of separation.
-            * **Supplies:** Maintain a 3-day supply of food and water.
-            """)
-    else:
-        with st.expander("✅ ROUTINE MAINTENANCE (Click to Expand)"):
-            st.markdown("""
-            * **Stay Informed:** Keep monitoring local PHIVOLCS advisories.
-            * **Standard Prep:** Keep a basic first aid kit accessible.
-            * **Insurance:** Review property insurance coverage for natural disasters.
-            """)
+        # SAFETY ACTIONS
+        st.markdown("---")
+        st.subheader("📋 Recommended Safety Actions")
         
+        if prob >= 0.60:
+            with st.expander("🚨 CRITICAL PRECAUTIONS (Click to Expand)", expanded=True):
+                st.markdown("""
+                * **Structural Check:** Consult a structural engineer immediately.
+                * **Emergency Kit:** Pack a "Go Bag" (water, food, flashlight, first aid).
+                * **Drills:** Conduct weekly earthquake drills.
+                * **Furniture:** Secure tall furniture to walls.
+                """)
+        elif prob >= 0.30:
+            with st.expander("⚠️ PRECAUTIONARY MEASURES (Click to Expand)", expanded=True):
+                st.markdown("""
+                * **Review Hazards:** Check for hanging objects above beds.
+                * **Communication Plan:** Agree on a family meeting point.
+                * **Supplies:** Maintain a 3-day supply of food/water.
+                """)
+        else:
+            with st.expander("✅ ROUTINE MAINTENANCE (Click to Expand)"):
+                st.markdown("""
+                * **Stay Informed:** Monitor PHIVOLCS advisories.
+                * **Standard Prep:** Keep a first aid kit accessible.
+                * **Insurance:** Review property insurance.
+                """)
 
-    # --- TAB 2: MAP ---
-    # --- TAB 2: MAP ---
+    # --- TAB 2: MAP (WITH HEATMAP) ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
         
-        # 1. Create Base Map
+        # Base Map (Dark Theme for better contrast)
         m = folium.Map(location=[res['lat'], res['lon']], zoom_start=11, tiles="CartoDB dark_matter")
         
-        # 2. Add Heatmap of Nearby Quakes (The New Visual Layer)
-        # We use the 'nearby_quakes' dataframe we calculated earlier
+        # 🔥 ADD HEATMAP LAYER
         if not nearby_quakes.empty:
+            from folium.plugins import HeatMap
+            # Extract Lat/Lon pairs
             heat_data = nearby_quakes[['Latitude', 'Longitude']].values.tolist()
             
             HeatMap(
                 heat_data, 
                 radius=15, 
                 blur=20, 
-                min_opacity=0.4,
+                min_opacity=0.4, 
                 gradient={0.4: 'blue', 0.65: 'lime', 1: 'red'}
             ).add_to(m)
 
-        # 3. Add the Main Marker (User Location)
+        # Add Marker
         folium.Marker(
             [res['lat'], res['lon']], 
             popup="Analyzed Location", 
-            icon=folium.Icon(color=color_code, icon="info-sign", prefix='fa')
+            icon=folium.Icon(color=color_code, icon="info-sign")
         ).add_to(m)
         
-        # 4. Add the Range Circle
+        # Add Circle
         folium.Circle(
-            radius=50000, # 50km radius to match your data
+            radius=50000, 
             location=[res['lat'], res['lon']],
             color=color_code,
-            fill=False,
-            weight=2
+            fill=False
         ).add_to(m)
         
         st_folium(m, height=400, use_container_width=True)
 
     # --- TAB 3: HISTORY ---
-with tab3:
-    st.subheader("Historical Earthquakes (50km Radius)")
-    nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
-    
-    if not nearby_quakes.empty:
-        # Use column_config to create the visual bars
-        st.dataframe(
-            nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']], 
-            use_container_width=True,
-            column_config={
-                "Magnitude": st.column_config.ProgressColumn(
-                    "Magnitude",
-                    help="Earthquake Magnitude",
-                    format="%.1f",
-                    min_value=0,
-                    max_value=10
-                    # Note: The bar color will automatically match your 
-                    # primaryColor (Red) defined in .streamlit/config.toml
-                ),
-                "Date_Time_PH": st.column_config.DatetimeColumn(
-                    "Date", format="D MMM YYYY, h:mm a"
-                )
-            }
-        )
-    else:
-        st.caption("No significant historical records found within 50km.")
+    with tab3:
+        st.subheader("Historical Earthquakes (50km Radius)")
+        
+        if not nearby_quakes.empty:
+            st.dataframe(
+                nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']], 
+                use_container_width=True,
+                column_config={
+                    "Magnitude": st.column_config.ProgressColumn(
+                        "Magnitude",
+                        format="%.1f",
+                        min_value=0,
+                        max_value=10
+                    ),
+                    "Date_Time_PH": st.column_config.DatetimeColumn(
+                        "Date", format="D MMM YYYY, h:mm a"
+                    )
+                }
+            )
+        else:
+            st.caption("No significant historical records found within 50km.")
 
 # Footer remains outside the if block
 st.divider()
