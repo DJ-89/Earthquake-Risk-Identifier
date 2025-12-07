@@ -340,45 +340,46 @@ if st.session_state.risk_result is not None:
     # --- TAB 2: MAP (WITH HEATMAP) ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
-        
-        # 1. Use 'OpenStreetMap' (Most reliable, works everywhere)
-        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=11, tiles="OpenStreetMap")
-        
-        # 2. Safety Check for Heatmap
-        # We drop NA values to prevent the map from crashing
+
+        # 1. FORCE NUMBERS (Crucial Fix)
+        # Sometimes data gets stuck as text ("14.5") which breaks maps.
+        center_lat = float(res['lat'])
+        center_lon = float(res['lon'])
+
+        # 2. Verify Data (This will show a warning if data is wrong)
+        if center_lat == 0 and center_lon == 0:
+            st.warning("⚠️ Coordinates appear to be zero. Map may look empty.")
+
+        # 3. Create Map
+        m = folium.Map(location=[center_lat, center_lon], zoom_start=11, tiles="OpenStreetMap")
+
+        # 4. Add Heatmap (Only if data exists)
         if not nearby_quakes.empty:
             from folium.plugins import HeatMap
-            # Ensure we only use valid numbers
-            valid_quakes = nearby_quakes[['Latitude', 'Longitude']].dropna()
+            # Filter and force floats
+            valid_data = nearby_quakes[['Latitude', 'Longitude']].dropna().astype(float)
             
-            if not valid_quakes.empty:
-                heat_data = valid_quakes.values.tolist()
-                HeatMap(
-                    heat_data, 
-                    radius=15, 
-                    blur=20, 
-                    min_opacity=0.4,
-                    gradient={0.4: 'blue', 0.65: 'lime', 1: 'red'}
-                ).add_to(m)
+            if not valid_data.empty:
+                heat_data = valid_data.values.tolist()
+                HeatMap(heat_data, radius=15, blur=20, min_opacity=0.4).add_to(m)
 
-        # 3. Add Marker
+        # 5. Add Marker
         folium.Marker(
-            [res['lat'], res['lon']], 
-            popup="Analyzed Location", 
+            [center_lat, center_lon],
+            popup="Analyzed Location",
             icon=folium.Icon(color=color_code, icon="info-sign")
         ).add_to(m)
-        
-        # 4. Add Circle
+
+        # 6. Add Circle
         folium.Circle(
-            radius=50000, 
-            location=[res['lat'], res['lon']],
+            radius=50000,
+            location=[center_lat, center_lon],
             color=color_code,
             fill=False
         ).add_to(m)
-        
-        # 5. Render
-        st_folium(m, height=400, use_container_width=True)
 
+        # 7. Render with FIXED dimensions (Most stable)
+        st_folium(m, width=700, height=500)
     # --- TAB 3: HISTORY ---
     with tab3:
         st.subheader("Historical Earthquakes (50km Radius)")
@@ -401,6 +402,7 @@ if st.session_state.risk_result is not None:
             )
         else:
             st.caption("No significant historical records found within 50km.")
+
 
 # Footer remains outside the if block
 st.divider()
