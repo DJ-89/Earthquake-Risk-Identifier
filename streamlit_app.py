@@ -332,9 +332,9 @@ with tab3:
                     help="Earthquake Magnitude",
                     format="%.1f",
                     min_value=0,
-                    max_value=10,
-                    # Color runs from Low (Green) to High (Red)
-                    list_color=["#00cc96", "#ff4b4b"] 
+                    max_value=10
+                    # Note: The bar color will automatically match your 
+                    # primaryColor (Red) defined in .streamlit/config.toml
                 ),
                 "Date_Time_PH": st.column_config.DatetimeColumn(
                     "Date", format="D MMM YYYY, h:mm a"
