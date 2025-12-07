@@ -11,6 +11,7 @@ import folium
 from streamlit_folium import st_folium
 import plotly.graph_objects as go
 from folium.plugins import HeatMap
+import pydeck as pdk
 warnings.filterwarnings('ignore')
 
 # Set page config
@@ -371,52 +372,60 @@ if st.session_state.risk_result is not None:
                 * **Standard Prep:** Keep a basic first aid kit accessible.
                 * **Insurance:** Review property insurance coverage.
                 """)
-# --- TAB 2: MAP ---
+# --- TAB 2: MAP (PyDeck Version - More Stable) ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
-        
-        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
-        
-        # 1. Manually filter for nearby data (Ignore the limit of 10)
-        # We want ALL points within 100km for a good heatmap
-        if 'raw_data' in locals():
-            # Approx 1 degree lat = 111km
-            # We filter a square box around the user to make it fast
-            lat_min, lat_max = res['lat'] - 1.0, res['lat'] + 1.0
-            lon_min, lon_max = res['lon'] - 1.0, res['lon'] + 1.0
-            
-            # Filter the raw data
-            nearby_map_data = raw_data[
-                (raw_data['Latitude'].between(lat_min, lat_max)) & 
-                (raw_data['Longitude'].between(lon_min, lon_max))
-            ].dropna()
-            
-            if not nearby_map_data.empty:
-                # Create the heatmap data list
-                heat_data = nearby_map_data[['Latitude', 'Longitude']].values.tolist()
-                
-                # Add HeatMap
-                HeatMap(heat_data, radius=15, blur=10).add_to(m)
+        st.caption("Heatmap shows density of historical earthquakes in this area.")
 
-        # 2. Add Marker
-        folium.Marker(
-            [res['lat'], res['lon']], 
-            popup="Analyzed Location", 
-            icon=folium.Icon(color=color_code, icon="info-sign")
-        ).add_to(m)
+        # 1. Prepare Data (Filter nearby points)
+        lat, lon = res['lat'], res['lon']
         
-        # 3. Add Circle
-        folium.Circle(
-            radius=20000, 
-            location=[res['lat'], res['lon']],
-            color=color_code,
-            fill=True,
-            fill_opacity=0.1
-        ).add_to(m)
-        
-        # 4. FIX: Add 'returned_objects=[]'
-        # This stops the map from reloading/flashing when you interact with it
-        st_folium(m, height=400, use_container_width=True, returned_objects=[])
+        if 'raw_data' in locals():
+            # Filter data to ~100km box around the user
+            nearby_data = raw_data[
+                (raw_data['Latitude'].between(lat - 1, lat + 1)) & 
+                (raw_data['Longitude'].between(lon - 1, lon + 1))
+            ].dropna()
+        else:
+            nearby_data = pd.DataFrame()
+
+        # 2. Render the Map
+        if not nearby_data.empty:
+            st.pydeck_chart(pdk.Deck(
+                # 'None' uses the default Streamlit map style (works in Dark Mode)
+                map_style=None, 
+                initial_view_state=pdk.ViewState(
+                    latitude=lat,
+                    longitude=lon,
+                    zoom=9,
+                    pitch=0,
+                ),
+                layers=[
+                    # Layer 1: The Heatmap (Historical Data)
+                    pdk.Layer(
+                        'HeatmapLayer',
+                        data=nearby_data,
+                        get_position='[Longitude, Latitude]',
+                        opacity=0.8,
+                        # Adjust 'threshold' to make the heat spots more/less intense
+                        threshold=0.1, 
+                        radiusPixels=40 
+                    ),
+                    # Layer 2: The User's Location (Red Dot)
+                    pdk.Layer(
+                        'ScatterplotLayer',
+                        data=pd.DataFrame({'lat': [lat], 'lon': [lon]}),
+                        get_position='[lon, lat]',
+                        get_color=[255, 75, 75, 200], # Red color
+                        get_radius=800, # Radius in meters
+                        stroked=True,
+                        line_width_min_pixels=2,
+                        get_line_color=[255, 255, 255]
+                    )
+                ]
+            ))
+        else:
+            st.warning("No historical data found in this immediate area to generate a heatmap.")
 
     # --- TAB 3: HISTORY ---
 
