@@ -228,7 +228,8 @@ if st.session_state.risk_result is None:
     # --- OPTION 1: QUICK STATS ---
     st.subheader("📊 Dataset Overview (Philippine Region)")
 
-    # FIX: Force 'Depth_In_Km' to numeric, turning bad data into NaN (which is ignored)
+    # 1. Clean data for stats
+    # Force 'Depth_In_Km' to numeric to avoid errors
     raw_data['Depth_In_Km'] = pd.to_numeric(raw_data['Depth_In_Km'], errors='coerce')
     
     col1, col2, col3, col4 = st.columns(4)
@@ -237,7 +238,6 @@ if st.session_state.risk_result is None:
     with col2:
         st.metric("Max Magnitude", f"{raw_data['Magnitude'].max()} Mw")
     with col3:
-        # Now .mean() will work because we removed non-numeric values
         avg_depth = raw_data['Depth_In_Km'].mean()
         st.metric("Avg. Depth", f"{avg_depth:.1f} km")
     with col4:
@@ -249,11 +249,15 @@ if st.session_state.risk_result is None:
     st.subheader("🗺️ Historical Seismic Activity")
     st.caption("Visualizing the density of recorded earthquake epicenters used for model training.")
     
-    # Clean map data
+    # 2. Clean data for Map
     map_data = raw_data[['Latitude', 'Longitude']].dropna()
+    
+    # FIX: Rename columns to lowercase 'latitude' and 'longitude' so st.map recognizes them
+    map_data = map_data.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude'})
+    
     st.map(map_data, zoom=4, color='#ff4b4b')
 
-    
+
 # --- PREDICTION LOGIC ---
 # This block must be OUTSIDE the 'with st.sidebar:' indentation
 
