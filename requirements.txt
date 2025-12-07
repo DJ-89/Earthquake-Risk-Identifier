@@ -6,3 +6,12 @@ joblib==1.5.1
 streamlit==1.52.1
 matplotlib==3.10.3
 seaborn==0.13.2
+streamlit
+pandas
+numpy
+joblib
+scikit-learn
+xgboost
+folium
+streamlit-folium
+plotly
