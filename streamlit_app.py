@@ -7,12 +7,15 @@ from sklearn.preprocessing import RobustScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 import warnings
+import folium
+from streamlit_folium import st_folium
+import plotly.graph_objects as go
 warnings.filterwarnings('ignore')
 
 # Set page config
 st.set_page_config(
-    page_title="Seismic Risk Prediction",
-    page_icon=" earthquak",
+    page_title="Earthquake Risk Identifier",
+    page_icon=" 🛡️",
     layout="wide"
 )
 
@@ -25,9 +28,12 @@ def load_model():
     threshold = joblib.load('threshold_risk_identifier.pkl')
     feature_columns = joblib.load('feature_cols_risk_identifier.pkl')
     zone_risk_lookup = joblib.load('zone_risk_lookup.pkl')
-    return model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup
+    # NEW: Load the raw data for the history table
+    raw_data = pd.read_csv('phivolcs_earthquake_data.csv')
+    return model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup, raw_data
 
-model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup = load_model()
+
+model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup, raw_data = load_model()
 
 # Function to predict risk based on latitude and longitude only
 def predict_risk(lat, lon):
@@ -105,6 +111,40 @@ def predict_risk(lat, lon):
     
     return risk_prediction, risk_prob, zone_risk
 
+def get_nearby_quakes(lat, lon, df, radius_km=50):
+    """Finds historical quakes within radius_km"""
+    # Approx: 1 deg lat ~= 111km
+    lat_min, lat_max = lat - (radius_km/111), lat + (radius_km/111)
+    lon_min, lon_max = lon - (radius_km/111), lon + (radius_km/111)
+    
+    nearby = df[
+        (df['Latitude'].between(lat_min, lat_max)) & 
+        (df['Longitude'].between(lon_min, lon_max))
+    ].copy()
+    
+    # Calculate exact distance
+    nearby['dist'] = np.sqrt((nearby['Latitude']-lat)**2 + (nearby['Longitude']-lon)**2) * 111
+    return nearby[nearby['dist'] <= radius_km].sort_values('Magnitude', ascending=False).head(10)
+
+def create_gauge(probability):
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = probability * 100,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Risk Probability", 'font': {'size': 24}},
+        gauge = {
+            'axis': {'range': [None, 100]},
+            'bar': {'color': "darkblue"},
+            'steps': [
+                {'range': [0, 40], 'color': "#00cc96"},
+                {'range': [40, 70], 'color': "#ffa15e"},
+                {'range': [70, 100], 'color': "#ff4b4b"}
+            ],
+        }
+    ))
+    fig.update_layout(height=250, margin=dict(l=20, r=20, t=50, b=20))
+    return fig
+
 # Streamlit UI
 st.title(" Earthquake Risk Identifier System")
 st.markdown("""
@@ -143,49 +183,35 @@ if st.button("  Calculate Risk ", type="primary"):
         
         # Display results
         st.divider()
-        st.subheader("Risk Assessment Results")
         
-        # Create result columns
-        res_col1, res_col2, res_col3 = st.columns(3)
+        # --- NEW DASHBOARD LAYOUT ---
+        col_kpi, col_gauge = st.columns([1, 1])
+
+        with col_kpi:
+            st.subheader("Analysis Result")
+            if risk_prediction:
+                st.markdown(f"<h1 style='color: #ff4b4b;'>⚠️ HIGH RISK</h1>", unsafe_allow_html=True)
+                st.write(f"The location **({latitude}, {longitude})** is identified as a high-risk seismic zone.")
+            else:
+                st.markdown(f"<h1 style='color: #00cc96;'>✅ LOW RISK</h1>", unsafe_allow_html=True)
+                st.write(f"The location **({latitude}, {longitude})** appears relatively stable based on historical patterns.")
+            
+            st.info(f"Zone Risk Score: {zone_risk:.1%}")
+
+        with col_gauge:
+            st.plotly_chart(create_gauge(risk_probability), use_container_width=True)
+
+        # --- HISTORY TABLE ---
+        st.subheader("📜 Nearby Historical Earthquakes (50km Radius)")
+        nearby_quakes = get_nearby_quakes(latitude, longitude, raw_data)
         
-        with res_col1:
-            st.metric(
-                label="Risk Level", 
-                value="HIGH RISK" if risk_prediction else "LOW RISK",
-                delta_color="inverse"
+        if not nearby_quakes.empty:
+            st.dataframe(
+                nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']],
+                use_container_width=True
             )
-        
-        with res_col2:
-            st.metric(
-                label="Risk Probability", 
-                value=f"{risk_probability:.2%}",
-                delta=f"{zone_risk:.2%} zone risk"
-            )
-        
-        with res_col3:
-            st.metric(
-                label="Alert Status", 
-                value="⚠️ ALERT" if risk_prediction else "✅ SAFE",
-                delta="Based on historical patterns" if risk_prediction else "Historical stability"
-            )
-        
-        # Detailed results
-        st.subheader("Detailed Analysis")
-        
-        if risk_prediction:
-            st.error(f"""
-            ⚠️ **HIGH RISK DETECTED**  
-            The location ({latitude}, {longitude}) has been classified as a high-risk area based on historical seismic patterns.  
-            Probability of significant seismic activity: **{risk_probability:.2%}**  
-            Zone risk score: **{zone_risk:.2%}**
-            """)
         else:
-            st.success(f"""
-            ✅ **LOW RISK CONFIRMED**  
-            The location ({latitude}, {longitude}) has been classified as a low-risk area based on historical seismic patterns.  
-            Probability of significant seismic activity: **{risk_probability:.2%}**  
-            Zone risk score: **{zone_risk:.2%}**
-            """)
+            st.caption("No significant historical records found within 50km.")
         
         # Additional information
         st.info("""
@@ -207,24 +233,30 @@ if st.button("Show Location on Map"):
         'lon': [longitude]
     })
     
-    st.map(location_data, zoom=7)
+    st.divider()
+st.subheader("🗺️ Interactive Risk Map")
 
-# Model information
-with st.expander("Model Information"):
-    st.write("""
-    **Model Details:**
-    - Algorithm: XGBoost Classifier
-    - Features: Latitude, Longitude, Depth (fixed), Seismic Zone, and derived features
-    - Training Data: Historical Philippine earthquake data
-    - Performance: AUC-ROC Score ~0.88 (as per training results)
-    
-    **Risk Classification:**
-    - High Risk: Areas with shallow earthquakes (≤15km depth) and magnitude ≥4.0
-    - Low Risk: Areas with deeper or less significant historical activity
-    """)
-    
-    st.write(f"**Feature Columns Used:** {', '.join(feature_columns)}")
+# Create Folium Map
+m = folium.Map(location=[latitude, longitude], zoom_start=9, tiles="CartoDB positron")
 
+# Add Marker
+folium.Marker(
+    [latitude, longitude], 
+    popup="Selected Location", 
+    icon=folium.Icon(color="red", icon="info-sign")
+).add_to(m)
+
+# Add Radius Circle
+folium.Circle(
+    radius=20000, # 20km
+    location=[latitude, longitude],
+    color="red",
+    fill=True,
+    fill_opacity=0.1
+).add_to(m)
+
+# Render Map
+st_data = st_folium(m, width="100%", height=400)
 # Footer
 st.divider()
 st.caption("Note: This application uses a machine learning model trained on historical data. Predictions should not be used as the sole basis for critical decisions.")
