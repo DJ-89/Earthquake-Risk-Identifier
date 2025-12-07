@@ -172,14 +172,6 @@ with st.sidebar:
     )
     
     st.markdown("---")
-
-    st.metric(
-        label="Zone Risk Score", 
-        value=f"{res['zone_risk']:.1%}", 
-        delta="Based on historical density", 
-        delta_color="off"
-    )
-    
     # Put the button in the sidebar too
     predict_btn = st.button("🚀 Analyze Risk", type="primary", use_container_width=True)
 
@@ -212,24 +204,28 @@ if st.session_state.risk_result is not None:
     with col_kpi:
         st.subheader("Analysis Result")
         
-        # --- NEW: 3-TIER LOGIC ---
+        # --- 3-TIER LOGIC (High/Med/Low) ---
         if prob >= 0.60:
-            # High Risk (>60%)
             st.markdown(f"<h1 style='color: #ff4b4b;'>⚠️ HIGH RISK</h1>", unsafe_allow_html=True)
             st.write(f"The location **({res['lat']}, {res['lon']})** is in a critical seismic zone.")
             color_code = "red"
         elif prob >= 0.30:
-            # Medium Risk (30-60%)
             st.markdown(f"<h1 style='color: #ffa15e;'>⚠️ MEDIUM RISK</h1>", unsafe_allow_html=True)
             st.write(f"The location **({res['lat']}, {res['lon']})** shows moderate seismic activity patterns.")
             color_code = "orange"
         else:
-            # Low Risk (<30%)
             st.markdown(f"<h1 style='color: #00cc96;'>✅ LOW RISK</h1>", unsafe_allow_html=True)
             st.write(f"The location **({res['lat']}, {res['lon']})** appears relatively stable.")
             color_code = "green"
         
-        st.info(f"Zone Risk Score: {res['zone_risk']:.1%}")
+        # --- NEW: Professional Metric Card ---
+        st.markdown("---")
+        st.metric(
+            label="Zone Risk Score", 
+            value=f"{res['zone_risk']:.1%}", 
+            delta="Based on historical density", 
+            delta_color="off"
+        )
 
     with col_gauge:
         st.plotly_chart(create_gauge(res['probability']), use_container_width=True)
@@ -243,13 +239,12 @@ if st.session_state.risk_result is not None:
     else:
         st.caption("No significant historical records found within 50km.")
 
-    # 3. Interactive Map (With 3 Colors)
+    # 3. Interactive Map
     st.divider()
     st.subheader("🗺️ Interactive Risk Map")
     
     m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
     
-    # Use the 'color_code' variable we set above (red/orange/green)
     folium.Marker(
         [res['lat'], res['lon']], 
         popup="Analyzed Location", 
