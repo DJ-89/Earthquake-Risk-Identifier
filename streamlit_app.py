@@ -154,32 +154,31 @@ st.markdown("""
 This application uses a machine learning model to assess the likelihood of high seismic risk based on geographical coordinates (latitude and longitude). 
 The model was trained on historical Philippine earthquake data.""")
 
-# Create input columns (only 2 now)
-col1, col2 = st.columns(2)
-
-with col1:
+# Move inputs to sidebar
+with st.sidebar:
+    st.header("📍 Input Parameters")
+    st.write("Enter coordinates or check defaults.")
+    
     latitude = st.number_input(
         "Latitude", 
-        value=8.4803,  # Default to CDO coordinates
-        min_value=-90.0, 
-        max_value=90.0, 
-        format="%.4f",
-        help="Enter latitude in decimal degrees (e.g., 8.4803 for CDO)"
+        value=8.4803, 
+        min_value=-90.0, max_value=90.0, format="%.4f"
     )
-
-with col2:
+    
     longitude = st.number_input(
         "Longitude", 
-        value=124.6498,  # Default to CDO coordinates
-        min_value=-180.0, 
-        max_value=180.0, 
-        format="%.4f",
-        help="Enter longitude in decimal degrees (e.g., 124.6498 for CDO)"
+        value=124.6498, 
+        min_value=-180.0, max_value=180.0, format="%.4f"
     )
+    
+    st.markdown("---")
+    
+    # Put the button in the sidebar too
+    predict_btn = st.button("🚀 Analyze Risk", type="primary", use_container_width=True)
 
-# Prediction button
-# Prediction button
-if st.button("  Calculate Risk ", type="primary"):
+# Update your logic to use 'predict_btn' instead of st.button(...)
+if predict_btn:
+    # ... rest of your prediction code
     with st.spinner("Analyzing seismic risk..."):
         # Run prediction
         risk_prediction, risk_probability, zone_risk = predict_risk(latitude, longitude)
