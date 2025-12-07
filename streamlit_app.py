@@ -372,16 +372,16 @@ if st.session_state.risk_result is not None:
                 * **Standard Prep:** Keep a basic first aid kit accessible.
                 * **Insurance:** Review property insurance coverage.
                 """)
-# --- TAB 2: MAP (PyDeck Version - More Stable) ---
+# --- TAB 2: MAP (PyDeck with Heatmap + 50km Radius) ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
-        st.caption("Heatmap shows density of historical earthquakes in this area.")
+        st.caption("Heatmap shows density of historical earthquakes. The circle represents a 50km radius.")
 
-        # 1. Prepare Data (Filter nearby points)
+        # 1. Prepare Data
         lat, lon = res['lat'], res['lon']
         
+        # Filter nearby data for the heatmap
         if 'raw_data' in locals():
-            # Filter data to ~100km box around the user
             nearby_data = raw_data[
                 (raw_data['Latitude'].between(lat - 1, lat + 1)) & 
                 (raw_data['Longitude'].between(lon - 1, lon + 1))
@@ -389,11 +389,10 @@ if st.session_state.risk_result is not None:
         else:
             nearby_data = pd.DataFrame()
 
-        # 2. Render the Map
+        # 2. Render PyDeck Chart
         if not nearby_data.empty:
             st.pydeck_chart(pdk.Deck(
-                # 'None' uses the default Streamlit map style (works in Dark Mode)
-                map_style=None, 
+                map_style=None,
                 initial_view_state=pdk.ViewState(
                     latitude=lat,
                     longitude=lon,
@@ -401,26 +400,36 @@ if st.session_state.risk_result is not None:
                     pitch=0,
                 ),
                 layers=[
-                    # Layer 1: The Heatmap (Historical Data)
+                    # Layer 1: The Heatmap (Historical Density)
                     pdk.Layer(
                         'HeatmapLayer',
                         data=nearby_data,
                         get_position='[Longitude, Latitude]',
-                        opacity=0.8,
-                        # Adjust 'threshold' to make the heat spots more/less intense
-                        threshold=0.1, 
-                        radiusPixels=40 
+                        opacity=0.6,
+                        threshold=0.05,
+                        radiusPixels=30
                     ),
-                    # Layer 2: The User's Location (Red Dot)
+                    # Layer 2: The 50km Radius Circle
                     pdk.Layer(
                         'ScatterplotLayer',
                         data=pd.DataFrame({'lat': [lat], 'lon': [lon]}),
                         get_position='[lon, lat]',
-                        get_color=[255, 75, 75, 200], # Red color
-                        get_radius=800, # Radius in meters
+                        get_radius=50000,          # CHANGED: 50,000 meters = 50km
+                        get_fill_color=[255, 75, 75, 30], # Red with high transparency
                         stroked=True,
-                        line_width_min_pixels=2,
-                        get_line_color=[255, 255, 255]
+                        get_line_color=[255, 75, 75, 100], # Solid red border
+                        line_width_min_pixels=2
+                    ),
+                    # Layer 3: The Exact Location Pin (Center Dot)
+                    pdk.Layer(
+                        'ScatterplotLayer',
+                        data=pd.DataFrame({'lat': [lat], 'lon': [lon]}),
+                        get_position='[lon, lat]',
+                        get_fill_color=[255, 255, 255, 255], 
+                        get_radius=500,  
+                        stroked=True,
+                        get_line_color=[255, 0, 0, 255],
+                        line_width_min_pixels=3
                     )
                 ]
             ))
