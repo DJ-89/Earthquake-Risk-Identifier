@@ -19,6 +19,24 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+<style>
+    /* Remove top padding */
+    .block-container {
+        padding-top: 2rem;
+    }
+    /* Style the main title */
+    h1 {
+        color: #ff4b4b;
+        font-weight: 700;
+    }
+    /* Make metric labels larger */
+    [data-testid="stMetricLabel"] {
+        font-size: 1.1rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Load the pre-trained model and other artifacts
 @st.cache_resource
 def load_model():
