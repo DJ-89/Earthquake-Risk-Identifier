@@ -145,6 +145,9 @@ def create_gauge(probability):
     fig.update_layout(height=250, margin=dict(l=20, r=20, t=50, b=20))
     return fig
 
+if 'risk_result' not in st.session_state:
+    st.session_state.risk_result = None
+
 # Streamlit UI
 st.title(" Earthquake Risk Identifier System")
 st.markdown("""
@@ -177,86 +180,78 @@ with col2:
     )
 
 # Prediction button
+# Prediction button
 if st.button("  Calculate Risk ", type="primary"):
     with st.spinner("Analyzing seismic risk..."):
+        # Run prediction
         risk_prediction, risk_probability, zone_risk = predict_risk(latitude, longitude)
         
-        # Display results
-        st.divider()
-        
-        # --- NEW DASHBOARD LAYOUT ---
-        col_kpi, col_gauge = st.columns([1, 1])
+        # SAVE results to session state
+        st.session_state.risk_result = {
+            'prediction': risk_prediction,
+            'probability': risk_probability,
+            'zone_risk': zone_risk,
+            'lat': latitude,
+            'lon': longitude
+        }
 
-        with col_kpi:
-            st.subheader("Analysis Result")
-            if risk_prediction:
-                st.markdown(f"<h1 style='color: #ff4b4b;'>⚠️ HIGH RISK</h1>", unsafe_allow_html=True)
-                st.write(f"The location **({latitude}, {longitude})** is identified as a high-risk seismic zone.")
-            else:
-                st.markdown(f"<h1 style='color: #00cc96;'>✅ LOW RISK</h1>", unsafe_allow_html=True)
-                st.write(f"The location **({latitude}, {longitude})** appears relatively stable based on historical patterns.")
-            
-            st.info(f"Zone Risk Score: {zone_risk:.1%}")
-
-        with col_gauge:
-            st.plotly_chart(create_gauge(risk_probability), use_container_width=True)
-
-        # --- HISTORY TABLE ---
-        st.subheader("📜 Nearby Historical Earthquakes (50km Radius)")
-        nearby_quakes = get_nearby_quakes(latitude, longitude, raw_data)
-        
-        if not nearby_quakes.empty:
-            st.dataframe(
-                nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']],
-                use_container_width=True
-            )
-        else:
-            st.caption("No significant historical records found within 50km.")
-        
-        # Additional information
-        st.info("""
-        **About this prediction:**
-        - This model uses historical earthquake data to identify areas with high seismic activity patterns
-        - Risk is determined based on shallow depth events (≤15km) with magnitude ≥4.0
-        - The prediction considers geographical clustering patterns
-        - This is for informational purposes only and should not replace professional geological assessment
-        """)
-
-# Add a map visualization section
-st.divider()
-st.subheader("Location Visualization")
-
-# Create a simple map using streamlit's built-in map function
-if st.button("Show Location on Map"):
-    location_data = pd.DataFrame({
-        'lat': [latitude],
-        'lon': [longitude]
-    })
+# --- DISPLAY RESULTS (Persistent) ---
+if st.session_state.risk_result is not None:
+    res = st.session_state.risk_result
     
     st.divider()
-st.subheader("🗺️ Interactive Risk Map")
+    
+    # 1. Dashboard (KPIs + Gauge)
+    col_kpi, col_gauge = st.columns([1, 1])
 
-# Create Folium Map
-m = folium.Map(location=[latitude, longitude], zoom_start=9, tiles="CartoDB positron")
+    with col_kpi:
+        st.subheader("Analysis Result")
+        if res['prediction']:
+            st.markdown(f"<h1 style='color: #ff4b4b;'>⚠️ HIGH RISK</h1>", unsafe_allow_html=True)
+            st.write(f"The location **({res['lat']}, {res['lon']})** is identified as a high-risk seismic zone.")
+        else:
+            st.markdown(f"<h1 style='color: #00cc96;'>✅ LOW RISK</h1>", unsafe_allow_html=True)
+            st.write(f"The location **({res['lat']}, {res['lon']})** appears relatively stable.")
+        
+        st.info(f"Zone Risk Score: {res['zone_risk']:.1%}")
 
-# Add Marker
-folium.Marker(
-    [latitude, longitude], 
-    popup="Selected Location", 
-    icon=folium.Icon(color="red", icon="info-sign")
-).add_to(m)
+    with col_gauge:
+        st.plotly_chart(create_gauge(res['probability']), use_container_width=True)
 
-# Add Radius Circle
-folium.Circle(
-    radius=20000, # 20km
-    location=[latitude, longitude],
-    color="red",
-    fill=True,
-    fill_opacity=0.1
-).add_to(m)
+    # 2. History Table
+    st.subheader("📜 Nearby Historical Earthquakes (50km)")
+    nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
+    
+    if not nearby_quakes.empty:
+        st.dataframe(nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']], use_container_width=True)
+    else:
+        st.caption("No significant historical records found within 50km.")
 
-# Render Map
-st_data = st_folium(m, width="100%", height=400)
+    # 3. Interactive Map
+    st.divider()
+    st.subheader("🗺️ Interactive Risk Map")
+    
+    # Define color based on risk
+    map_color = "red" if res['prediction'] else "green"
+    
+    m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
+    
+    folium.Marker(
+        [res['lat'], res['lon']], 
+        popup="Analyzed Location", 
+        icon=folium.Icon(color=map_color, icon="info-sign")
+    ).add_to(m)
+    
+    folium.Circle(
+        radius=20000, 
+        location=[res['lat'], res['lon']],
+        color=map_color,
+        fill=True,
+        fill_opacity=0.1
+    ).add_to(m)
+    
+    st_folium(m, width="100%", height=400)
+
 # Footer
 st.divider()
-st.caption("Note: This application uses a machine learning model trained on historical data. Predictions should not be used as the sole basis for critical decisions.")
+st.caption("Note: Predictions should not be used as the sole basis for critical decisions.")
