@@ -341,36 +341,27 @@ if st.session_state.risk_result is not None:
     with tab2:
         st.subheader("Geographic Risk Visualization")
 
-        # 1. FORCE NUMBERS (Crucial Fix)
-        # Sometimes data gets stuck as text ("14.5") which breaks maps.
+        # 1. Force Numbers (Safety)
         center_lat = float(res['lat'])
         center_lon = float(res['lon'])
 
-        # 2. Verify Data (This will show a warning if data is wrong)
-        if center_lat == 0 and center_lon == 0:
-            st.warning("⚠️ Coordinates appear to be zero. Map may look empty.")
-
-        # 3. Create Map
         m = folium.Map(location=[center_lat, center_lon], zoom_start=11, tiles="OpenStreetMap")
 
-        # 4. Add Heatmap (Only if data exists)
+        # 2. Add Heatmap
         if not nearby_quakes.empty:
             from folium.plugins import HeatMap
-            # Filter and force floats
             valid_data = nearby_quakes[['Latitude', 'Longitude']].dropna().astype(float)
-            
             if not valid_data.empty:
                 heat_data = valid_data.values.tolist()
                 HeatMap(heat_data, radius=15, blur=20, min_opacity=0.4).add_to(m)
 
-        # 5. Add Marker
+        # 3. Add Marker & Circle
         folium.Marker(
             [center_lat, center_lon],
             popup="Analyzed Location",
             icon=folium.Icon(color=color_code, icon="info-sign")
         ).add_to(m)
 
-        # 6. Add Circle
         folium.Circle(
             radius=50000,
             location=[center_lat, center_lon],
@@ -378,8 +369,15 @@ if st.session_state.risk_result is not None:
             fill=False
         ).add_to(m)
 
-        # 7. Render with FIXED dimensions (Most stable)
-        st_folium(m, width=700, height=500)
+        # 4. THE CRITICAL FIX 👇
+        # returned_objects=[] stops the map from refreshing the app every time you move the mouse
+        # width=700 ensures it has a size even if the tab tries to hide it
+        st_folium(
+            m, 
+            height=500, 
+            width=800, 
+            returned_objects=[] 
+        )
     # --- TAB 3: HISTORY ---
     with tab3:
         st.subheader("Historical Earthquakes (50km Radius)")
