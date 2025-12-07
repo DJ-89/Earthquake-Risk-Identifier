@@ -341,31 +341,34 @@ if st.session_state.risk_result is not None:
     with tab2:
         st.subheader("Geographic Risk Visualization")
         
-        # Base Map (Dark Theme for better contrast)
-        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=11, tiles="CartoDB dark_matter")
+        # 1. Use 'OpenStreetMap' (Most reliable, works everywhere)
+        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=11, tiles="OpenStreetMap")
         
-        # 🔥 ADD HEATMAP LAYER
+        # 2. Safety Check for Heatmap
+        # We drop NA values to prevent the map from crashing
         if not nearby_quakes.empty:
             from folium.plugins import HeatMap
-            # Extract Lat/Lon pairs
-            heat_data = nearby_quakes[['Latitude', 'Longitude']].values.tolist()
+            # Ensure we only use valid numbers
+            valid_quakes = nearby_quakes[['Latitude', 'Longitude']].dropna()
             
-            HeatMap(
-                heat_data, 
-                radius=15, 
-                blur=20, 
-                min_opacity=0.4, 
-                gradient={0.4: 'blue', 0.65: 'lime', 1: 'red'}
-            ).add_to(m)
+            if not valid_quakes.empty:
+                heat_data = valid_quakes.values.tolist()
+                HeatMap(
+                    heat_data, 
+                    radius=15, 
+                    blur=20, 
+                    min_opacity=0.4,
+                    gradient={0.4: 'blue', 0.65: 'lime', 1: 'red'}
+                ).add_to(m)
 
-        # Add Marker
+        # 3. Add Marker
         folium.Marker(
             [res['lat'], res['lon']], 
             popup="Analyzed Location", 
             icon=folium.Icon(color=color_code, icon="info-sign")
         ).add_to(m)
         
-        # Add Circle
+        # 4. Add Circle
         folium.Circle(
             radius=50000, 
             location=[res['lat'], res['lon']],
@@ -373,6 +376,7 @@ if st.session_state.risk_result is not None:
             fill=False
         ).add_to(m)
         
+        # 5. Render
         st_folium(m, height=400, use_container_width=True)
 
     # --- TAB 3: HISTORY ---
