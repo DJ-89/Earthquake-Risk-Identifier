@@ -172,24 +172,23 @@ st.markdown("""
 This application uses a machine learning model to assess the likelihood of high seismic risk based on geographical coordinates (latitude and longitude). 
 The model was trained on historical Philippine earthquake data.""")
 
-# Function to update coordinates (Must be defined before buttons)
+
 def set_coords(lat, lon):
     st.session_state.lat_input = lat
     st.session_state.lon_input = lon
 
-# Move inputs to sidebar
+# 2. Initialize defaults if they don't exist
+if 'lat_input' not in st.session_state:
+    st.session_state.lat_input = 8.4803
+if 'lon_input' not in st.session_state:
+    st.session_state.lon_input = 124.6498
+
+# 3. Sidebar Code
 with st.sidebar:
     st.header("📍 Input Parameters")
-    
-    # 1. Initialize Default Coordinates
-    if 'lat_input' not in st.session_state:
-        st.session_state.lat_input = 8.4803
-    if 'lon_input' not in st.session_state:
-        st.session_state.lon_input = 124.6498
-
     st.write("Enter coordinates or choose a preset.")
     
-    # 2. Input Fields
+    # IMPORTANT: Remove 'value=' and just use 'key='
     latitude = st.number_input(
         "Latitude", 
         key="lat_input",
@@ -203,33 +202,20 @@ with st.sidebar:
     )
     
     st.markdown("---")
-    
-    # 3. Analyze Button
     predict_btn = st.button("🚀 Analyze Risk", type="primary", use_container_width=True)
 
-    # 4. Quick Load Presets
     st.markdown("---")
     st.subheader("📍 Quick Load Locations")
     
     col1, col2 = st.columns(2)
-    
-    # Use 'on_click' to safely update the inputs
     with col1:
         st.button("Manila", on_click=set_coords, args=(14.5995, 120.9842), use_container_width=True)
         st.button("Cagayan de Oro", on_click=set_coords, args=(8.4542, 124.6319), use_container_width=True)
-
     with col2:
         st.button("Cebu City", on_click=set_coords, args=(10.3157, 123.8854), use_container_width=True)
         st.button("Davao City", on_click=set_coords, args=(7.1907, 125.4553), use_container_width=True)
 
-    # 5. Project Details (Optional but nice)
-    st.markdown("---")
-    st.subheader("ℹ️ Project Details")
-    with st.expander("About this App"):
-        st.write("""
-        **Data Source:** PHIVOLCS Earthquake Catalog
-        **Model:** XGBoost + DBSCAN
-        """)
+
 
 # --- DISPLAY RESULTS (Persistent) ---
 if st.session_state.risk_result is not None:
