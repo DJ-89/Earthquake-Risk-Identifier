@@ -271,29 +271,32 @@ if st.session_state.risk_result is not None:
     tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🗺️ Interactive Map", "📜 History Data"])
 
     # --- TAB 1: DASHBOARD ---
-    col_kpi, col_gauge = st.columns([1, 1])
-    
-    with col_kpi:
-        st.subheader("Analysis Result")
-        
-        # Use distinct colored boxes for immediate visual impact
-        if prob >= 0.60:
-            with st.container(border=True): # Adds a nice border
-                st.error("### ⚠️ HIGH RISK ZONE")
-                st.write(risk_msg)
-        elif prob >= 0.30:
-            with st.container(border=True):
-                st.warning("### ⚠️ MEDIUM RISK ZONE")
-                st.write(risk_msg)
-        else:
-            with st.container(border=True):
-                st.success("### ✅ LOW RISK ZONE")
-                st.write(risk_msg)
+    # --- TAB 1: DASHBOARD ---
+    with tab1:
+        # 1. Create columns inside the tab
+        col_kpi, col_gauge = st.columns([1, 1])
 
-        
+        # 2. Fill the LEFT column
+        with col_kpi:
+            st.subheader("Analysis Result")
+            
+            # Status Box (Red/Orange/Green)
+            if prob >= 0.60:
+                with st.container(border=True): 
+                    st.error("### ⚠️ HIGH RISK DETECTED")
+                    st.write(risk_msg)
+            elif prob >= 0.30:
+                with st.container(border=True):
+                    st.warning("### ⚠️ MEDIUM RISK ZONE")
+                    st.write(risk_msg)
+            else:
+                with st.container(border=True):
+                    st.success("### ✅ LOW RISK ZONE")
+                    st.write(risk_msg)
+
             st.markdown("---")
             
-            # Professional Metric Card
+            
             st.metric(
                 label="Zone Risk Score", 
                 value=f"{res['zone_risk']:.1%}", 
@@ -301,6 +304,7 @@ if st.session_state.risk_result is not None:
                 delta_color="off"
             )
 
+        # 3. Fill the RIGHT column
         with col_gauge:
             st.plotly_chart(create_gauge(prob), use_container_width=True)
 
