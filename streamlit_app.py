@@ -371,20 +371,27 @@ if st.session_state.risk_result is not None:
                 * **Standard Prep:** Keep a basic first aid kit accessible.
                 * **Insurance:** Review property insurance coverage.
                 """)
-
-    # --- TAB 2: MAP ---
+# --- TAB 2: MAP ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
         
+        # 1. Create the base map centered on the analyzed location
         m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
         
-        # Use 'color_code' determined above
+        # 2. Add the Heatmap Layer (Historical Data)
+        # We ensure we only use valid lat/lon data to prevent errors
+        if 'raw_data' in locals() and not raw_data.empty:
+            heat_data = raw_data[['Latitude', 'Longitude']].dropna().values.tolist()
+            HeatMap(heat_data, radius=15, blur=10).add_to(m)
+        
+        # 3. Add the Marker for the Analyzed Location
         folium.Marker(
             [res['lat'], res['lon']], 
             popup="Analyzed Location", 
             icon=folium.Icon(color=color_code, icon="info-sign")
         ).add_to(m)
         
+        # 4. Add the Radius Circle
         folium.Circle(
             radius=20000, 
             location=[res['lat'], res['lon']],
@@ -393,13 +400,8 @@ if st.session_state.risk_result is not None:
             fill_opacity=0.1
         ).add_to(m)
         
+        # 5. Display the map
         st_folium(m, height=400, use_container_width=True)
-
-    # --- TAB 3: HISTORY ---
-# ... (Your tab1 and tab2 code remains above this) ...
-
-    # --- TAB 3: HISTORY ---
-# ... (Your tab1 and tab2 code remains above this) ...
 
     # --- TAB 3: HISTORY ---
 
