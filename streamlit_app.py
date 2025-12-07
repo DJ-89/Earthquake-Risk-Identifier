@@ -364,6 +364,10 @@ if st.session_state.risk_result is not None:
 # ... (Your tab1 and tab2 code remains above this) ...
 
     # --- TAB 3: HISTORY ---
+# ... (Your tab1 and tab2 code remains above this) ...
+
+    # --- TAB 3: HISTORY ---
+
     with tab3:
         st.subheader("Historical Earthquakes (50km Radius)")
         nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
@@ -389,7 +393,7 @@ if st.session_state.risk_result is not None:
                 }
             )
         else:
-            st.caption("No significant historical records found within 50km."))
+            st.caption("No significant historical records found within 50km.")
 
 # Footer remains outside the if block
 st.divider()
