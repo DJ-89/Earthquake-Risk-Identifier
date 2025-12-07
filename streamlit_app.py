@@ -23,18 +23,36 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* --- EXISTING STYLES --- */
+    
     /* Remove top padding */
     .block-container {
         padding-top: 2rem;
     }
+    
     /* Style the main title */
     h1 {
         color: #ff4b4b;
         font-weight: 700;
     }
+    
     /* Make metric labels larger */
     [data-testid="stMetricLabel"] {
         font-size: 1.1rem;
+    }
+
+    /* --- NEW: MOBILE SIDEBAR PULSE --- */
+    /* This targets the sidebar toggle arrow (>) to make it pulse red */
+    [data-testid="stSidebarCollapsedControl"] {
+        animation: pulse 2s infinite;
+        color: #ff4b4b;
+        font-weight: 800;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -286,6 +304,18 @@ if st.session_state.risk_result is not None:
     res = st.session_state.risk_result
     prob = res['probability']
     
+
+    # --- NEW: MOBILE CONTEXT BAR ---
+    # This sits at the top of the main page so mobile users see their inputs
+    with st.container():
+        c1, c2 = st.columns([3, 1])
+        with c1:
+            st.info(f"📍 **Analyzing:** {res['lat']:.4f}, {res['lon']:.4f}")
+        with c2:
+            # A visual hint pointing to the sidebar
+            st.caption("↖ Open Sidebar to change")
+
+
     # 1. PRE-CALCULATE LOGIC (So it works for both Dashboard and Map)
     if prob >= 0.60:
         risk_label = "HIGH RISK"
@@ -379,7 +409,7 @@ if st.session_state.risk_result is not None:
                 * **🔦 Utility Check:** Know exactly where your main gas, water, and electric shut-off valves are located and how to turn them off.
                 """)
 
-                
+
 # --- TAB 2: MAP (PyDeck with Heatmap + 50km Radius) ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
