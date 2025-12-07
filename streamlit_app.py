@@ -351,27 +351,35 @@ if st.session_state.risk_result is not None:
         st.subheader("📋 Recommended Safety Actions")
         
         if prob >= 0.60:
-            with st.expander("🚨 CRITICAL PRECAUTIONS (Click to Expand)", expanded=True):
+            with st.expander("🚨 CRITICAL PRECAUTIONS (High Risk Zone)", expanded=True):
                 st.markdown("""
-                * **Structural Check:** Immediately consult a structural engineer.
-                * **Emergency Kit:** Ensure a "Go Bag" is packed.
-                * **Drills:** Conduct earthquake drills weekly.
-                * **Furniture:** Secure tall furniture to walls.
+                **Immediate Actions Required:**
+                * **🏗️ Structural Inspection:** Contact a licensed civil engineer to inspect your building's foundation, beams, and columns for cracks or weaknesses immediately.
+                * **🎒 Emergency "Go Bag":** Ensure every family member has a bag packed with 3 days of water, non-perishable food, flashlight, batteries, whistle, and a first-aid kit.
+                * **🗄️ Secure Heavy Furniture:** Bolt bookshelves, cabinets, and water heaters to the wall to prevent them from toppling during shaking.
+                * **👨‍👩‍👧‍👦 Family Drill:** Conduct "Drop, Cover, and Hold On" drills weekly. Designate a safe evacuation area outside away from power lines.
+                * **📄 Document Protection:** Keep copies of important documents (IDs, land titles, insurance) in a waterproof container or cloud storage.
                 """)
         elif prob >= 0.30:
-            with st.expander("⚠️ PRECAUTIONARY MEASURES (Click to Expand)", expanded=True):
+            with st.expander("⚠️ PRECAUTIONARY MEASURES (Medium Risk Zone)", expanded=True):
                 st.markdown("""
-                * **Review Hazards:** Check for hanging objects.
-                * **Communication Plan:** Agree on a meeting point.
-                * **Supplies:** Maintain a 3-day supply of food and water.
+                **Standard Readiness Steps:**
+                * **🖼️ Hazard Hunt:** Check your rooms for heavy objects hanging over beds or sofas (e.g., mirrors, shelves). Relocate them to safer spots.
+                * **📍 Communication Plan:** Agree on a specific meeting point (e.g., a nearby park) if family members are separated when an earthquake hits.
+                * **🔋 Backup Power:** Have a power bank fully charged and a battery-operated radio to monitor news if electricity is cut off.
+                * **🥫 Supply Buffer:** Maintain a pantry with at least 3 days' worth of ready-to-eat food and 4 liters of water per person.
                 """)
         else:
-            with st.expander("✅ ROUTINE MAINTENANCE (Click to Expand)"):
+            with st.expander("✅ ROUTINE MAINTENANCE (Low Risk Zone)"):
                 st.markdown("""
-                * **Stay Informed:** Keep monitoring PHIVOLCS advisories.
-                * **Standard Prep:** Keep a basic first aid kit accessible.
-                * **Insurance:** Review property insurance coverage.
+                **Maintenance & Awareness:**
+                * **📢 Stay Informed:** Download the PHIVOLCS app or follow local disaster management pages for occasional advisories.
+                * **🩹 Basic First Aid:** Keep a simple first aid kit accessible (bandages, antiseptic, pain relievers) and check expiration dates annually.
+                * **🏠 Property Insurance:** Review your home insurance policy to see if it covers "Acts of Nature" or earthquake damage, just in case.
+                * **🔦 Utility Check:** Know exactly where your main gas, water, and electric shut-off valves are located and how to turn them off.
                 """)
+
+                
 # --- TAB 2: MAP (PyDeck with Heatmap + 50km Radius) ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
