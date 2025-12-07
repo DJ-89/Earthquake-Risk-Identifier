@@ -221,6 +221,31 @@ with st.sidebar:
         st.button("Cebu City", on_click=set_coords, args=(10.3157, 123.8854), use_container_width=True)
         st.button("Davao City", on_click=set_coords, args=(7.1907, 125.4553), use_container_width=True)
 
+# --- OPTION 1: QUICK STATS ---
+    st.subheader("📊 Dataset Overview (Philippine Region)")
+    
+    # Create 4 columns for metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Earthquakes", f"{len(raw_data):,}")
+    with col2:
+        st.metric("Max Magnitude", f"{raw_data['Magnitude'].max()} Mw")
+    with col3:
+        st.metric("Avg. Depth", f"{raw_data['Depth_In_Km'].mean():.1f} km")
+    with col4:
+        # Assuming your data has a Year column, if not, you can remove this
+        st.metric("Data Source", "PHIVOLCS")
+
+    st.markdown("---")
+
+    # --- OPTION 2: MAP ---
+    st.subheader("🗺️ Historical Seismic Activity")
+    st.caption("Visualizing the density of recorded earthquake epicenters used for model training.")
+    
+    # Simple Streamlit map
+    # We drop any missing coordinates to prevent errors
+    map_data = raw_data[['Latitude', 'Longitude']].dropna()
+    st.map(map_data, zoom=4, color='#ff4b4b')
 
 # --- PREDICTION LOGIC ---
 # This block must be OUTSIDE the 'with st.sidebar:' indentation
