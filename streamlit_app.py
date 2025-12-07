@@ -24,17 +24,19 @@ def load_model():
     dbscan = joblib.load('dbscan_zone_identifier.pkl')
     threshold = joblib.load('threshold_risk_identifier.pkl')
     feature_columns = joblib.load('feature_cols_risk_identifier.pkl')
-    zone_risk_lookup = joblib.load('zone_risk_lookup.pkl')
+    zone_risk_lookup = joblib.load('zone_stats_lookup.pkl')
     return model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup
 
 model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup = load_model()
 
-# Function to predict risk based on latitude and longitude
-def predict_risk(lat, lon, depth=10.0):
+# Function to predict risk based on latitude and longitude only
+def predict_risk(lat, lon):
     """
-    Predict seismic risk based on latitude, longitude, and depth
-    Default depth is set to 10km as a reasonable average for shallow quakes
+    Predict seismic risk based on latitude and longitude only
+    Depth is fixed to a default value (10km) since it's not an input anymore
     """
+    depth = 10.0  # Fixed default depth
+    
     # Create a dataframe with the input values
     input_df = pd.DataFrame({
         'Latitude': [lat],
@@ -111,8 +113,8 @@ based on geographical coordinates (latitude and longitude). The model was traine
 Philippine earthquake data.
 """)
 
-# Create input columns
-col1, col2, col3 = st.columns(3)
+# Create input columns (only 2 now)
+col1, col2 = st.columns(2)
 
 with col1:
     latitude = st.number_input(
@@ -134,20 +136,10 @@ with col2:
         help="Enter longitude in decimal degrees (e.g., 121.7740 for Manila)"
     )
 
-with col3:
-    depth = st.slider(
-        "Depth (km)", 
-        min_value=1.0, 
-        max_value=100.0, 
-        value=10.0,
-        step=0.5,
-        help="Depth of the hypothetical seismic event in kilometers"
-    )
-
 # Prediction button
 if st.button("  Calculate Risk ", type="primary"):
     with st.spinner("Analyzing seismic risk..."):
-        risk_prediction, risk_probability, zone_risk = predict_risk(latitude, longitude, depth)
+        risk_prediction, risk_probability, zone_risk = predict_risk(latitude, longitude)
         
         # Display results
         st.divider()
@@ -183,14 +175,14 @@ if st.button("  Calculate Risk ", type="primary"):
         if risk_prediction:
             st.error(f"""
             ⚠️ **HIGH RISK DETECTED**  
-            The location ({latitude}, {longitude}) at depth {depth}km has been classified as a high-risk area based on historical seismic patterns.  
+            The location ({latitude}, {longitude}) has been classified as a high-risk area based on historical seismic patterns.  
             Probability of significant seismic activity: **{risk_probability:.2%}**  
             Zone risk score: **{zone_risk:.2%}**
             """)
         else:
             st.success(f"""
             ✅ **LOW RISK CONFIRMED**  
-            The location ({latitude}, {longitude}) at depth {depth}km has been classified as a low-risk area based on historical seismic patterns.  
+            The location ({latitude}, {longitude}) has been classified as a low-risk area based on historical seismic patterns.  
             Probability of significant seismic activity: **{risk_probability:.2%}**  
             Zone risk score: **{zone_risk:.2%}**
             """)
@@ -200,7 +192,7 @@ if st.button("  Calculate Risk ", type="primary"):
         **About this prediction:**
         - This model uses historical earthquake data to identify areas with high seismic activity patterns
         - Risk is determined based on shallow depth events (≤15km) with magnitude ≥4.0
-        - The prediction considers geographical clustering and depth patterns
+        - The prediction considers geographical clustering patterns
         - This is for informational purposes only and should not replace professional geological assessment
         """)
 
@@ -222,7 +214,7 @@ with st.expander("Model Information"):
     st.write("""
     **Model Details:**
     - Algorithm: XGBoost Classifier
-    - Features: Latitude, Longitude, Depth, Seismic Zone, and derived features
+    - Features: Latitude, Longitude, Depth (fixed), Seismic Zone, and derived features
     - Training Data: Historical Philippine earthquake data
     - Performance: AUC-ROC Score ~0.88 (as per training results)
     
