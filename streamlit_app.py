@@ -151,10 +151,8 @@ if 'risk_result' not in st.session_state:
 # Streamlit UI
 st.title(" Earthquake Risk Identifier System")
 st.markdown("""
-This application uses a machine learning model to predict the likelihood of high seismic risk 
-based on geographical coordinates (latitude and longitude). The model was trained on historical 
-Philippine earthquake data.
-""")
+This application uses a machine learning model to assess the likelihood of high seismic risk based on geographical coordinates (latitude and longitude). 
+The model was trained on historical Philippine earthquake data.""")
 
 # Create input columns (only 2 now)
 col1, col2 = st.columns(2)
