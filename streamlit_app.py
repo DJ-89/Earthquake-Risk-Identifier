@@ -271,7 +271,7 @@ if st.session_state.risk_result is not None:
     tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🗺️ Interactive Map", "📜 History Data"])
 
     # --- TAB 1: DASHBOARD ---
-with col_kpi:
+    with col_kpi:
         st.subheader("Analysis Result")
         
         # Use distinct colored boxes for immediate visual impact
@@ -288,7 +288,7 @@ with col_kpi:
                 st.success("### ✅ LOW RISK ZONE")
                 st.write(risk_msg)
 
-        # This line must align with the 'if/else' above (inside col_kpi)
+        
             st.markdown("---")
             
             # Professional Metric Card
