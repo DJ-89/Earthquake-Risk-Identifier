@@ -179,9 +179,9 @@ def set_coords(lat, lon):
 
 # 2. Initialize defaults if they don't exist
 if 'lat_input' not in st.session_state:
-    st.session_state.lat_input = 8.4803
+    st.session_state.lat_input = 0
 if 'lon_input' not in st.session_state:
-    st.session_state.lon_input = 124.6498
+    st.session_state.lon_input = 0
 
 # 3. Sidebar Code
 with st.sidebar:
