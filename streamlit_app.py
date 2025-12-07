@@ -211,13 +211,15 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("📍 Quick Load Locations")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(2)
     with col1:
         st.button("Manila", on_click=set_coords, args=(14.5995, 120.9842), use_container_width=True)
         st.button("Cagayan de Oro", on_click=set_coords, args=(8.4542, 124.6319), use_container_width=True)
     with col2:
         st.button("Cebu City", on_click=set_coords, args=(10.3157, 123.8854), use_container_width=True)
         st.button("Davao City", on_click=set_coords, args=(7.1907, 125.4553), use_container_width=True)
+    with col3:
+        st.button("Palawan", on_click=set_coords, args=(9.457, 118.39), use_container_width=True)
 
 # --- PREDICTION LOGIC ---
 # This block must be OUTSIDE the 'with st.sidebar:' indentation
