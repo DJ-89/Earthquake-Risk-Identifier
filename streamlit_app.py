@@ -264,4 +264,4 @@ if st.session_state.risk_result is not None:
 
 # Footer
 st.divider()
-st.caption("Note: Predictions should not be used as the sole basis for critical decisions.")
+st.caption("Note: This risk assessment is for informational purposes only and must not be interpreted as a definitive forecast. Critical safety decisions should rely on official government advisories.")
