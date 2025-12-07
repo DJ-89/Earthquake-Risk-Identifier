@@ -24,7 +24,7 @@ def load_model():
     dbscan = joblib.load('dbscan_zone_identifier.pkl')
     threshold = joblib.load('threshold_risk_identifier.pkl')
     feature_columns = joblib.load('feature_cols_risk_identifier.pkl')
-    zone_risk_lookup = joblib.load('zone_stats_lookup.pkl')
+    zone_risk_lookup = joblib.load('zone_risk_lookup.pkl')
     return model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup
 
 model, scaler, dbscan, threshold, feature_columns, zone_risk_lookup = load_model()
@@ -106,7 +106,7 @@ def predict_risk(lat, lon):
     return risk_prediction, risk_prob, zone_risk
 
 # Streamlit UI
-st.title(" earthquak Seismic Risk Prediction System")
+st.title(" Earthquake Risk Identifier System")
 st.markdown("""
 This application uses a machine learning model to predict the likelihood of high seismic risk 
 based on geographical coordinates (latitude and longitude). The model was trained on historical 
@@ -119,21 +119,21 @@ col1, col2 = st.columns(2)
 with col1:
     latitude = st.number_input(
         "Latitude", 
-        value=12.8797,  # Default to Manila coordinates
+        value=8.4803,  # Default to CDO coordinates
         min_value=-90.0, 
         max_value=90.0, 
         format="%.4f",
-        help="Enter latitude in decimal degrees (e.g., 12.8797 for Manila)"
+        help="Enter latitude in decimal degrees (e.g., 8.4803 for CDO)"
     )
 
 with col2:
     longitude = st.number_input(
         "Longitude", 
-        value=121.7740,  # Default to Manila coordinates
+        value=124.6498,  # Default to CDO coordinates
         min_value=-180.0, 
         max_value=180.0, 
         format="%.4f",
-        help="Enter longitude in decimal degrees (e.g., 121.7740 for Manila)"
+        help="Enter longitude in decimal degrees (e.g., 124.6498 for CDO)"
     )
 
 # Prediction button
