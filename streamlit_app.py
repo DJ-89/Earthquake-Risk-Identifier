@@ -297,7 +297,7 @@ if st.session_state.risk_result is not None:
     with tab2:
         st.subheader("Geographic Risk Visualization")
         
-        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB dark_matter")
+        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
         
         # Use 'color_code' determined above
         folium.Marker(
