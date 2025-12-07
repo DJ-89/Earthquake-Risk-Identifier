@@ -198,6 +198,7 @@ if st.button("  Calculate Risk ", type="primary"):
 # --- DISPLAY RESULTS (Persistent) ---
 if st.session_state.risk_result is not None:
     res = st.session_state.risk_result
+    prob = res['probability']
     
     st.divider()
     
@@ -206,12 +207,23 @@ if st.session_state.risk_result is not None:
 
     with col_kpi:
         st.subheader("Analysis Result")
-        if res['prediction']:
+        
+        # --- NEW: 3-TIER LOGIC ---
+        if prob >= 0.70:
+            # High Risk (>70%)
             st.markdown(f"<h1 style='color: #ff4b4b;'>⚠️ HIGH RISK</h1>", unsafe_allow_html=True)
-            st.write(f"The location **({res['lat']}, {res['lon']})** is identified as a high-risk seismic zone.")
+            st.write(f"The location **({res['lat']}, {res['lon']})** is in a critical seismic zone.")
+            color_code = "red"
+        elif prob >= 0.40:
+            # Medium Risk (40-70%)
+            st.markdown(f"<h1 style='color: #ffa15e;'>⚠️ MEDIUM RISK</h1>", unsafe_allow_html=True)
+            st.write(f"The location **({res['lat']}, {res['lon']})** shows moderate seismic activity patterns.")
+            color_code = "orange"
         else:
+            # Low Risk (<40%)
             st.markdown(f"<h1 style='color: #00cc96;'>✅ LOW RISK</h1>", unsafe_allow_html=True)
             st.write(f"The location **({res['lat']}, {res['lon']})** appears relatively stable.")
+            color_code = "green"
         
         st.info(f"Zone Risk Score: {res['zone_risk']:.1%}")
 
@@ -227,30 +239,28 @@ if st.session_state.risk_result is not None:
     else:
         st.caption("No significant historical records found within 50km.")
 
-    # 3. Interactive Map
+    # 3. Interactive Map (With 3 Colors)
     st.divider()
     st.subheader("🗺️ Interactive Risk Map")
     
-    # Define color based on risk
-    map_color = "red" if res['prediction'] else "green"
-    
     m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
     
+    # Use the 'color_code' variable we set above (red/orange/green)
     folium.Marker(
         [res['lat'], res['lon']], 
         popup="Analyzed Location", 
-        icon=folium.Icon(color=map_color, icon="info-sign")
+        icon=folium.Icon(color=color_code, icon="info-sign")
     ).add_to(m)
     
     folium.Circle(
         radius=20000, 
         location=[res['lat'], res['lon']],
-        color=map_color,
+        color=color_code,
         fill=True,
         fill_opacity=0.1
     ).add_to(m)
     
-    st_folium(m, width="100%", height=400)
+    st_folium(m, height=350, use_container_width=True)
 
 # Footer
 st.divider()
