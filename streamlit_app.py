@@ -317,17 +317,32 @@ if st.session_state.risk_result is not None:
         st_folium(m, height=400, use_container_width=True)
 
     # --- TAB 3: HISTORY ---
-    with tab3:
-        st.subheader("Historical Earthquakes (50km Radius)")
-        nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
-        
-        if not nearby_quakes.empty:
-            st.dataframe(
-                nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']], 
-                use_container_width=True
-            )
-        else:
-            st.caption("No significant historical records found within 50km.")
+with tab3:
+    st.subheader("Historical Earthquakes (50km Radius)")
+    nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
+    
+    if not nearby_quakes.empty:
+        # Use column_config to create the visual bars
+        st.dataframe(
+            nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']], 
+            use_container_width=True,
+            column_config={
+                "Magnitude": st.column_config.ProgressColumn(
+                    "Magnitude",
+                    help="Earthquake Magnitude",
+                    format="%.1f",
+                    min_value=0,
+                    max_value=10,
+                    # Color runs from Low (Green) to High (Red)
+                    list_color=["#00cc96", "#ff4b4b"] 
+                ),
+                "Date_Time_PH": st.column_config.DatetimeColumn(
+                    "Date", format="D MMM YYYY, h:mm a"
+                )
+            }
+        )
+    else:
+        st.caption("No significant historical records found within 50km.")
 
 # Footer remains outside the if block
 st.divider()
