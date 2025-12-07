@@ -115,7 +115,7 @@ def predict_risk(lat, lon):
             # Heuristic: If total magnitude sum > 50, risk is 0.95 (High)
             total_mag = nearby['Magnitude'].sum()
             # Normalize to 0.1 - 0.9 range
-            zone_risk = min(0.9, max(0.1, total_mag / 50.0))
+            zone_risk = min(0.95, max(0.05, total_mag / 500.0))
         else:
             zone_risk = 0.1  # Very low risk if no history
             
