@@ -172,6 +172,13 @@ with st.sidebar:
     )
     
     st.markdown("---")
+
+    st.metric(
+        label="Zone Risk Score", 
+        value=f"{res['zone_risk']:.1%}", 
+        delta="Based on historical density", 
+        delta_color="off"
+    )
     
     # Put the button in the sidebar too
     predict_btn = st.button("🚀 Analyze Risk", type="primary", use_container_width=True)
