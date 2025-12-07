@@ -272,14 +272,14 @@ if st.session_state.risk_result is not None:
 
     # --- TAB 1: DASHBOARD ---
     col_kpi, col_gauge = st.columns([1, 1])
-
+    
     with col_kpi:
         st.subheader("Analysis Result")
         
         # Use distinct colored boxes for immediate visual impact
         if prob >= 0.60:
             with st.container(border=True): # Adds a nice border
-                st.error("### ⚠️ HIGH RISK DETECTED")
+                st.error("### ⚠️ HIGH RISK ZONE")
                 st.write(risk_msg)
         elif prob >= 0.30:
             with st.container(border=True):
