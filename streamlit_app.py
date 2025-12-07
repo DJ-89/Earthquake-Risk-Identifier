@@ -309,8 +309,8 @@ if st.session_state.risk_result is not None:
             st.plotly_chart(create_gauge(prob), use_container_width=True)
 
 
-    st.markdown("---")
-    st.subheader("📋 Recommended Safety Actions")
+            st.markdown("---")
+            st.subheader("📋 Recommended Safety Actions")
     
     # Define advice based on risk level
     if prob >= 0.60:
