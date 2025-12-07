@@ -271,15 +271,24 @@ if st.session_state.risk_result is not None:
     tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🗺️ Interactive Map", "📜 History Data"])
 
     # --- TAB 1: DASHBOARD ---
-    with tab1:
-        col_kpi, col_gauge = st.columns([1, 1])
+with col_kpi:
+        st.subheader("Analysis Result")
+        
+        # Use distinct colored boxes for immediate visual impact
+        if prob >= 0.60:
+            with st.container(border=True): # Adds a nice border
+                st.error("### ⚠️ HIGH RISK DETECTED")
+                st.write(risk_msg)
+        elif prob >= 0.30:
+            with st.container(border=True):
+                st.warning("### ⚠️ MEDIUM RISK ZONE")
+                st.write(risk_msg)
+        else:
+            with st.container(border=True):
+                st.success("### ✅ LOW RISK ZONE")
+                st.write(risk_msg)
 
-        with col_kpi:
-            st.subheader("Analysis Result")
-            # Use the pre-calculated variables
-            st.markdown(f"<h1 style='color: {risk_color};'>⚠️ {risk_label}</h1>", unsafe_allow_html=True)
-            st.write(risk_msg)
-
+        # This line must align with the 'if/else' above (inside col_kpi)
             st.markdown("---")
             
             # Professional Metric Card
