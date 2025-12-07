@@ -24,35 +24,41 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* --- EXISTING STYLES --- */
-    
-    /* Remove top padding */
     .block-container {
         padding-top: 2rem;
     }
-    
-    /* Style the main title */
     h1 {
         color: #ff4b4b;
         font-weight: 700;
     }
-    
-    /* Make metric labels larger */
     [data-testid="stMetricLabel"] {
         font-size: 1.1rem;
     }
 
-    /* --- NEW: MOBILE SIDEBAR PULSE --- */
-    /* This targets the sidebar toggle arrow (>) to make it pulse red */
+    /* --- STRONGER PULSE ANIMATION --- */
+    /* Target the sidebar toggle button specifically */
     [data-testid="stSidebarCollapsedControl"] {
-        animation: pulse 2s infinite;
-        color: #ff4b4b;
-        font-weight: 800;
+        animation: pulse 2s infinite !important;
+        color: #ff4b4b !important; /* Force Red Color */
+        border: 1px solid #ff4b4b !important; /* Add a red ring around it */
+        border-radius: 50% !important;
+        background-color: rgba(255, 75, 75, 0.1) !important; /* Faint red background */
     }
     
+    /* Animation Keyframes */
     @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.3); }
-        100% { transform: scale(1); }
+        0% { 
+            transform: scale(1); 
+            box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.7);
+        }
+        70% { 
+            transform: scale(1.1); 
+            box-shadow: 0 0 0 10px rgba(255, 75, 75, 0);
+        }
+        100% { 
+            transform: scale(1); 
+            box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
+        }
     }
 </style>
 """, unsafe_allow_html=True)
