@@ -23,43 +23,39 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* --- 1. EXISTING STYLES --- */
+    /* --- STANDARD STYLES --- */
     .block-container { padding-top: 2rem; }
     h1 { color: #ff4b4b; font-weight: 700; }
     [data-testid="stMetricLabel"] { font-size: 1.1rem; }
 
-    /* --- 2. FORCED PULSE ANIMATION (The Fix) --- */
+    /* --- THE GHOST RING ANIMATION --- */
+    @keyframes ghostPulse {
+        0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.7); }
+        50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 0 10px rgba(255, 75, 75, 0); }
+        100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255, 75, 75, 0); }
+    }
     
-    /* Target the container of the arrow button */
-    [data-testid="stSidebarCollapsedControl"] {
-        background-color: rgba(255, 75, 75, 0.15) !important; /* Faint red background */
-        border: 2px solid #ff4b4b !important; /* Red ring */
-        border-radius: 8px !important;
-        animation: pulse-ring 2s infinite !important;
+    .ghost-ring {
+        position: fixed;
+        top: 3.5rem; /* Adjust this if the ring is too high/low */
+        left: 1rem;  /* Adjust this if the ring is too left/right */
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        border: 2px solid #ff4b4b;
+        animation: ghostPulse 2s infinite;
+        z-index: 999999;
+        pointer-events: none; /* Allows you to click the button "through" the ring */
     }
-
-    /* Target the actual arrow icon (SVG) to make it red */
-    [data-testid="stSidebarCollapsedControl"] svg {
-        fill: #ff4b4b !important;
-        color: #ff4b4b !important;
-    }
-
-    /* The Animation Definition */
-    @keyframes pulse-ring {
-        0% {
-            box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.7);
-            transform: scale(0.95);
-        }
-        70% {
-            box-shadow: 0 0 0 10px rgba(255, 75, 75, 0);
-            transform: scale(1.05);
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
-            transform: scale(0.95);
-        }
+    
+    /* Hide the ring on desktop screens if you want (optional) */
+    @media (min-width: 800px) {
+        /* .ghost-ring { display: none; } */ 
+        /* Uncomment line above if you only want this on mobile */
     }
 </style>
+
+<div class="ghost-ring"></div>
 """, unsafe_allow_html=True)
 
 # Load the pre-trained model and other artifacts
