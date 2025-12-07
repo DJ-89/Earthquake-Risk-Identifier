@@ -10,6 +10,7 @@ import warnings
 import folium
 from streamlit_folium import st_folium
 import plotly.graph_objects as go
+from folium.plugins import HeatMap
 warnings.filterwarnings('ignore')
 
 # Set page config
@@ -338,24 +339,40 @@ if st.session_state.risk_result is not None:
         
 
     # --- TAB 2: MAP ---
+    # --- TAB 2: MAP ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
         
-        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
+        # 1. Create Base Map
+        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=11, tiles="CartoDB dark_matter")
         
-        # Use 'color_code' determined above
+        # 2. Add Heatmap of Nearby Quakes (The New Visual Layer)
+        # We use the 'nearby_quakes' dataframe we calculated earlier
+        if not nearby_quakes.empty:
+            heat_data = nearby_quakes[['Latitude', 'Longitude']].values.tolist()
+            
+            HeatMap(
+                heat_data, 
+                radius=15, 
+                blur=20, 
+                min_opacity=0.4,
+                gradient={0.4: 'blue', 0.65: 'lime', 1: 'red'}
+            ).add_to(m)
+
+        # 3. Add the Main Marker (User Location)
         folium.Marker(
             [res['lat'], res['lon']], 
             popup="Analyzed Location", 
-            icon=folium.Icon(color=color_code, icon="info-sign")
+            icon=folium.Icon(color=color_code, icon="info-sign", prefix='fa')
         ).add_to(m)
         
+        # 4. Add the Range Circle
         folium.Circle(
-            radius=20000, 
+            radius=50000, # 50km radius to match your data
             location=[res['lat'], res['lon']],
             color=color_code,
-            fill=True,
-            fill_opacity=0.1
+            fill=False,
+            weight=2
         ).add_to(m)
         
         st_folium(m, height=400, use_container_width=True)
