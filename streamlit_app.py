@@ -23,41 +23,40 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* --- EXISTING STYLES --- */
-    .block-container {
-        padding-top: 2rem;
-    }
-    h1 {
-        color: #ff4b4b;
-        font-weight: 700;
-    }
-    [data-testid="stMetricLabel"] {
-        font-size: 1.1rem;
+    /* --- 1. EXISTING STYLES --- */
+    .block-container { padding-top: 2rem; }
+    h1 { color: #ff4b4b; font-weight: 700; }
+    [data-testid="stMetricLabel"] { font-size: 1.1rem; }
+
+    /* --- 2. FORCED PULSE ANIMATION (The Fix) --- */
+    
+    /* Target the container of the arrow button */
+    [data-testid="stSidebarCollapsedControl"] {
+        background-color: rgba(255, 75, 75, 0.15) !important; /* Faint red background */
+        border: 2px solid #ff4b4b !important; /* Red ring */
+        border-radius: 8px !important;
+        animation: pulse-ring 2s infinite !important;
     }
 
-    /* --- STRONGER PULSE ANIMATION --- */
-    /* Target the sidebar toggle button specifically */
-    [data-testid="stSidebarCollapsedControl"] {
-        animation: pulse 2s infinite !important;
-        color: #ff4b4b !important; /* Force Red Color */
-        border: 1px solid #ff4b4b !important; /* Add a red ring around it */
-        border-radius: 50% !important;
-        background-color: rgba(255, 75, 75, 0.1) !important; /* Faint red background */
+    /* Target the actual arrow icon (SVG) to make it red */
+    [data-testid="stSidebarCollapsedControl"] svg {
+        fill: #ff4b4b !important;
+        color: #ff4b4b !important;
     }
-    
-    /* Animation Keyframes */
-    @keyframes pulse {
-        0% { 
-            transform: scale(1); 
+
+    /* The Animation Definition */
+    @keyframes pulse-ring {
+        0% {
             box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.7);
+            transform: scale(0.95);
         }
-        70% { 
-            transform: scale(1.1); 
+        70% {
             box-shadow: 0 0 0 10px rgba(255, 75, 75, 0);
+            transform: scale(1.05);
         }
-        100% { 
-            transform: scale(1); 
+        100% {
             box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
+            transform: scale(0.95);
         }
     }
 </style>
