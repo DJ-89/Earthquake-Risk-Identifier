@@ -175,39 +175,59 @@ The model was trained on historical Philippine earthquake data.""")
 # Move inputs to sidebar
 with st.sidebar:
     st.header("📍 Input Parameters")
-    st.write("Enter coordinates or check defaults.")
     
+    # 1. Initialize Default Coordinates in Session State if they don't exist
+    if 'lat_input' not in st.session_state:
+        st.session_state.lat_input = 8.4803
+    if 'lon_input' not in st.session_state:
+        st.session_state.lon_input = 124.6498
+
+    st.write("Enter coordinates or choose a preset.")
+    
+    # 2. Input Fields (Linked to session_state via 'key')
     latitude = st.number_input(
         "Latitude", 
-        value=8.4803, 
+        key="lat_input", # This links the widget to the variable
         min_value=-90.0, max_value=90.0, format="%.4f"
     )
     
     longitude = st.number_input(
         "Longitude", 
-        value=124.6498, 
+        key="lon_input", # This links the widget to the variable
         min_value=-180.0, max_value=180.0, format="%.4f"
     )
     
     st.markdown("---")
-    # Put the button in the sidebar too
+    
+    # 3. Analyze Button
     predict_btn = st.button("🚀 Analyze Risk", type="primary", use_container_width=True)
 
-# Update your logic to use 'predict_btn' instead of st.button(...)
-if predict_btn:
-    # ... rest of your prediction code
-    with st.spinner("Analyzing seismic risk..."):
-        # Run prediction
-        risk_prediction, risk_probability, zone_risk = predict_risk(latitude, longitude)
-        
-        # SAVE results to session state
-        st.session_state.risk_result = {
-            'prediction': risk_prediction,
-            'probability': risk_probability,
-            'zone_risk': zone_risk,
-            'lat': latitude,
-            'lon': longitude
-        }
+    # 4. Quick Load Presets
+    st.markdown("---")
+    st.subheader("📍 Quick Load Locations")
+    
+    # Grid Layout for Buttons
+    col1, col2 = st.columns(2)
+    
+    # Helper function to update coordinates
+    def set_coords(lat, lon):
+        st.session_state.lat_input = lat
+        st.session_state.lon_input = lon
+        # We don't need st.rerun() here because clicking a button triggers a rerun automatically
+
+    with col1:
+        if st.button("Manila", use_container_width=True):
+            set_coords(14.5995, 120.9842)
+            
+        if st.button("Cagayan de Oro", use_container_width=True):
+            set_coords(8.4542, 124.6319)
+
+    with col2:
+        if st.button("Cebu City", use_container_width=True):
+            set_coords(10.3157, 123.8854)
+            
+        if st.button("Davao City", use_container_width=True):
+            set_coords(7.1907, 125.4553)
 
 # --- DISPLAY RESULTS (Persistent) ---
 if st.session_state.risk_result is not None:
