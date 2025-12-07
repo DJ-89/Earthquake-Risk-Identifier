@@ -215,7 +215,27 @@ with st.sidebar:
         st.button("Cebu City", on_click=set_coords, args=(10.3157, 123.8854), use_container_width=True)
         st.button("Davao City", on_click=set_coords, args=(7.1907, 125.4553), use_container_width=True)
 
+# --- PREDICTION LOGIC ---
+# This block must be OUTSIDE the 'with st.sidebar:' indentation
 
+if predict_btn:
+    with st.spinner("Analyzing seismic risk..."):
+        # 1. Get the latest coordinates directly from Session State
+        # This fixes the "cannot analyze" error by ensuring we have the values
+        current_lat = st.session_state.lat_input
+        current_lon = st.session_state.lon_input
+        
+        # 2. Run Prediction
+        risk_prediction, risk_probability, zone_risk = predict_risk(current_lat, current_lon)
+        
+        # 3. Save results
+        st.session_state.risk_result = {
+            'prediction': risk_prediction,
+            'probability': risk_probability,
+            'zone_risk': zone_risk,
+            'lat': current_lat,
+            'lon': current_lon
+        }
 
 # --- DISPLAY RESULTS (Persistent) ---
 if st.session_state.risk_result is not None:
