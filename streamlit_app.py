@@ -271,6 +271,8 @@ if st.session_state.risk_result is not None:
     tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🗺️ Interactive Map", "📜 History Data"])
 
     # --- TAB 1: DASHBOARD ---
+    col_kpi, col_gauge = st.columns([1, 1])
+
     with col_kpi:
         st.subheader("Analysis Result")
         
