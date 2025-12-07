@@ -23,39 +23,20 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* --- STANDARD STYLES --- */
-    .block-container { padding-top: 2rem; }
-    h1 { color: #ff4b4b; font-weight: 700; }
-    [data-testid="stMetricLabel"] { font-size: 1.1rem; }
-
-    /* --- THE GHOST RING ANIMATION --- */
-    @keyframes ghostPulse {
-        0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.7); }
-        50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 0 10px rgba(255, 75, 75, 0); }
-        100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255, 75, 75, 0); }
+    /* Remove top padding */
+    .block-container {
+        padding-top: 2rem;
     }
-    
-    .ghost-ring {
-        position: fixed;
-        top: 3.5rem; /* Adjust this if the ring is too high/low */
-        left: 1rem;  /* Adjust this if the ring is too left/right */
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        border: 2px solid #ff4b4b;
-        animation: ghostPulse 2s infinite;
-        z-index: 999999;
-        pointer-events: none; /* Allows you to click the button "through" the ring */
+    /* Style the main title */
+    h1 {
+        color: #ff4b4b;
+        font-weight: 700;
     }
-    
-    /* Hide the ring on desktop screens if you want (optional) */
-    @media (min-width: 800px) {
-        /* .ghost-ring { display: none; } */ 
-        /* Uncomment line above if you only want this on mobile */
+    /* Make metric labels larger */
+    [data-testid="stMetricLabel"] {
+        font-size: 1.1rem;
     }
 </style>
-
-<div class="ghost-ring"></div>
 """, unsafe_allow_html=True)
 
 # Load the pre-trained model and other artifacts
