@@ -136,9 +136,9 @@ def create_gauge(probability):
             'axis': {'range': [None, 100]},
             'bar': {'color': "darkblue"},
             'steps': [
-                {'range': [0, 40], 'color': "#00cc96"},
-                {'range': [40, 70], 'color': "#ffa15e"},
-                {'range': [70, 100], 'color': "#ff4b4b"}
+                {'range': [0, 30], 'color': "#00cc96"},
+                {'range': [30, 60], 'color': "#ffa15e"},
+                {'range': [60, 100], 'color': "#ff4b4b"}
             ],
         }
     ))
@@ -209,18 +209,18 @@ if st.session_state.risk_result is not None:
         st.subheader("Analysis Result")
         
         # --- NEW: 3-TIER LOGIC ---
-        if prob >= 0.70:
-            # High Risk (>70%)
+        if prob >= 0.60:
+            # High Risk (>60%)
             st.markdown(f"<h1 style='color: #ff4b4b;'>⚠️ HIGH RISK</h1>", unsafe_allow_html=True)
             st.write(f"The location **({res['lat']}, {res['lon']})** is in a critical seismic zone.")
             color_code = "red"
-        elif prob >= 0.40:
-            # Medium Risk (40-70%)
+        elif prob >= 0.30:
+            # Medium Risk (30-60%)
             st.markdown(f"<h1 style='color: #ffa15e;'>⚠️ MEDIUM RISK</h1>", unsafe_allow_html=True)
             st.write(f"The location **({res['lat']}, {res['lon']})** shows moderate seismic activity patterns.")
             color_code = "orange"
         else:
-            # Low Risk (<40%)
+            # Low Risk (<30%)
             st.markdown(f"<h1 style='color: #00cc96;'>✅ LOW RISK</h1>", unsafe_allow_html=True)
             st.write(f"The location **({res['lat']}, {res['lon']})** appears relatively stable.")
             color_code = "green"
