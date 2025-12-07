@@ -375,29 +375,37 @@ if st.session_state.risk_result is not None:
     with tab2:
         st.subheader("Geographic Risk Visualization")
         
-        # 1. Create Base Map
         m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
         
-        # 2. Add Heatmap (Nearby Data Only)
-        # We reuse your existing function to get quakes within 100km
-        # This prevents the map from crashing by ignoring data far away
+        # 1. Manually filter for nearby data (Ignore the limit of 10)
+        # We want ALL points within 100km for a good heatmap
         if 'raw_data' in locals():
-            # Get data within 100km radius for the visual
-            nearby_map_data = get_nearby_quakes(res['lat'], res['lon'], raw_data, radius_km=100)
+            # Approx 1 degree lat = 111km
+            # We filter a square box around the user to make it fast
+            lat_min, lat_max = res['lat'] - 1.0, res['lat'] + 1.0
+            lon_min, lon_max = res['lon'] - 1.0, res['lon'] + 1.0
+            
+            # Filter the raw data
+            nearby_map_data = raw_data[
+                (raw_data['Latitude'].between(lat_min, lat_max)) & 
+                (raw_data['Longitude'].between(lon_min, lon_max))
+            ].dropna()
             
             if not nearby_map_data.empty:
+                # Create the heatmap data list
                 heat_data = nearby_map_data[['Latitude', 'Longitude']].values.tolist()
-                # Add the heatmap layer
+                
+                # Add HeatMap
                 HeatMap(heat_data, radius=15, blur=10).add_to(m)
 
-        # 3. Add Marker for Analyzed Location
+        # 2. Add Marker
         folium.Marker(
             [res['lat'], res['lon']], 
             popup="Analyzed Location", 
             icon=folium.Icon(color=color_code, icon="info-sign")
         ).add_to(m)
         
-        # 4. Add Radius Circle (Visualizing the 20km immediate zone)
+        # 3. Add Circle
         folium.Circle(
             radius=20000, 
             location=[res['lat'], res['lon']],
@@ -406,8 +414,9 @@ if st.session_state.risk_result is not None:
             fill_opacity=0.1
         ).add_to(m)
         
-        # 5. Render Map
-        st_folium(m, height=400, use_container_width=True)
+        # 4. FIX: Add 'returned_objects=[]'
+        # This stops the map from reloading/flashing when you interact with it
+        st_folium(m, height=400, use_container_width=True, returned_objects=[])
 
     # --- TAB 3: HISTORY ---
 
