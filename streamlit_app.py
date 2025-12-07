@@ -308,6 +308,35 @@ if st.session_state.risk_result is not None:
         with col_gauge:
             st.plotly_chart(create_gauge(prob), use_container_width=True)
 
+
+    st.markdown("---")
+    st.subheader("📋 Recommended Safety Actions")
+    
+    # Define advice based on risk level
+    if prob >= 0.60:
+        with st.expander("🚨 CRITICAL PRECAUTIONS (Click to Expand)", expanded=True):
+            st.markdown("""
+            * **Structural Check:** Immediately consult a structural engineer to inspect your building's integrity.
+            * **Emergency Kit:** Ensure a "Go Bag" is packed (water, non-perishable food, flashlight, first aid).
+            * **Drills:** Conduct earthquake drills with family/employees weekly.
+            * **Furniture:** Secure tall furniture (bookshelves, cabinets) to walls.
+            """)
+    elif prob >= 0.30:
+        with st.expander("⚠️ PRECAUTIONARY MEASURES (Click to Expand)", expanded=True):
+            st.markdown("""
+            * **Review Hazards:** Check for hanging objects above beds or workspaces.
+            * **Communication Plan:** Agree on a meeting point for your family in case of separation.
+            * **Supplies:** Maintain a 3-day supply of food and water.
+            """)
+    else:
+        with st.expander("✅ ROUTINE MAINTENANCE (Click to Expand)"):
+            st.markdown("""
+            * **Stay Informed:** Keep monitoring local PHIVOLCS advisories.
+            * **Standard Prep:** Keep a basic first aid kit accessible.
+            * **Insurance:** Review property insurance coverage for natural disasters.
+            """)
+        
+
     # --- TAB 2: MAP ---
     with tab2:
         st.subheader("Geographic Risk Visualization")
