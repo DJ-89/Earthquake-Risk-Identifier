@@ -196,71 +196,87 @@ if st.session_state.risk_result is not None:
     res = st.session_state.risk_result
     prob = res['probability']
     
-    st.divider()
-    
-    # 1. Dashboard (KPIs + Gauge)
-    col_kpi, col_gauge = st.columns([1, 1])
-
-    with col_kpi:
-        st.subheader("Analysis Result")
-        
-        # --- 3-TIER LOGIC (High/Med/Low) ---
-        if prob >= 0.60:
-            st.markdown(f"<h1 style='color: #ff4b4b;'>⚠️ HIGH RISK</h1>", unsafe_allow_html=True)
-            st.write(f"The location **({res['lat']}, {res['lon']})** is in a critical seismic zone.")
-            color_code = "red"
-        elif prob >= 0.30:
-            st.markdown(f"<h1 style='color: #ffa15e;'>⚠️ MEDIUM RISK</h1>", unsafe_allow_html=True)
-            st.write(f"The location **({res['lat']}, {res['lon']})** shows moderate seismic activity patterns.")
-            color_code = "orange"
-        else:
-            st.markdown(f"<h1 style='color: #00cc96;'>✅ LOW RISK</h1>", unsafe_allow_html=True)
-            st.write(f"The location **({res['lat']}, {res['lon']})** appears relatively stable.")
-            color_code = "green"
-        
-        # --- NEW: Professional Metric Card ---
-        st.markdown("---")
-        st.metric(
-            label="Zone Risk Score", 
-            value=f"{res['zone_risk']:.1%}", 
-            delta="Based on historical density", 
-            delta_color="off"
-        )
-
-    with col_gauge:
-        st.plotly_chart(create_gauge(res['probability']), use_container_width=True)
-
-    # 2. History Table
-    st.subheader("📜 Nearby Historical Earthquakes (50km)")
-    nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
-    
-    if not nearby_quakes.empty:
-        st.dataframe(nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']], use_container_width=True)
+    # 1. PRE-CALCULATE LOGIC (So it works for both Dashboard and Map)
+    if prob >= 0.60:
+        risk_label = "HIGH RISK"
+        risk_color = "#ff4b4b"  # Hex for text
+        color_code = "red"      # Name for Folium marker
+        risk_msg = f"The location **({res['lat']}, {res['lon']})** is in a critical seismic zone."
+    elif prob >= 0.30:
+        risk_label = "MEDIUM RISK"
+        risk_color = "#ffa15e"
+        color_code = "orange"
+        risk_msg = f"The location **({res['lat']}, {res['lon']})** shows moderate seismic activity patterns."
     else:
-        st.caption("No significant historical records found within 50km.")
+        risk_label = "LOW RISK"
+        risk_color = "#00cc96"
+        color_code = "green"
+        risk_msg = f"The location **({res['lat']}, {res['lon']})** appears relatively stable."
 
-    # 3. Interactive Map
     st.divider()
-    st.subheader("🗺️ Interactive Risk Map")
-    
-    m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
-    
-    folium.Marker(
-        [res['lat'], res['lon']], 
-        popup="Analyzed Location", 
-        icon=folium.Icon(color=color_code, icon="info-sign")
-    ).add_to(m)
-    
-    folium.Circle(
-        radius=20000, 
-        location=[res['lat'], res['lon']],
-        color=color_code,
-        fill=True,
-        fill_opacity=0.1
-    ).add_to(m)
-    
-    st_folium(m, height=350, use_container_width=True)
 
-# Footer
+    # 2. CREATE TABS
+    tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🗺️ Interactive Map", "📜 History Data"])
+
+    # --- TAB 1: DASHBOARD ---
+    with tab1:
+        col_kpi, col_gauge = st.columns([1, 1])
+
+        with col_kpi:
+            st.subheader("Analysis Result")
+            # Use the pre-calculated variables
+            st.markdown(f"<h1 style='color: {risk_color};'>⚠️ {risk_label}</h1>", unsafe_allow_html=True)
+            st.write(risk_msg)
+
+            st.markdown("---")
+            
+            # Professional Metric Card
+            st.metric(
+                label="Zone Risk Score", 
+                value=f"{res['zone_risk']:.1%}", 
+                delta="Based on historical density", 
+                delta_color="off"
+            )
+
+        with col_gauge:
+            st.plotly_chart(create_gauge(prob), use_container_width=True)
+
+    # --- TAB 2: MAP ---
+    with tab2:
+        st.subheader("Geographic Risk Visualization")
+        
+        m = folium.Map(location=[res['lat'], res['lon']], zoom_start=10, tiles="CartoDB positron")
+        
+        # Use 'color_code' determined above
+        folium.Marker(
+            [res['lat'], res['lon']], 
+            popup="Analyzed Location", 
+            icon=folium.Icon(color=color_code, icon="info-sign")
+        ).add_to(m)
+        
+        folium.Circle(
+            radius=20000, 
+            location=[res['lat'], res['lon']],
+            color=color_code,
+            fill=True,
+            fill_opacity=0.1
+        ).add_to(m)
+        
+        st_folium(m, height=400, use_container_width=True)
+
+    # --- TAB 3: HISTORY ---
+    with tab3:
+        st.subheader("Historical Earthquakes (50km Radius)")
+        nearby_quakes = get_nearby_quakes(res['lat'], res['lon'], raw_data)
+        
+        if not nearby_quakes.empty:
+            st.dataframe(
+                nearby_quakes[['Date_Time_PH', 'Magnitude', 'Depth_In_Km', 'Location']], 
+                use_container_width=True
+            )
+        else:
+            st.caption("No significant historical records found within 50km.")
+
+# Footer remains outside the if block
 st.divider()
-st.caption("Note: This risk assessment is for informational purposes only and must not be interpreted as a definitive forecast. Critical safety decisions should rely on official government advisories.")
+st.caption("Note: This risk assessment is for informational purposes only and must not be interpreted as a definitive forecast.")
