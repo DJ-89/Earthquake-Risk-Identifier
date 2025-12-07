@@ -273,14 +273,14 @@ if st.session_state.risk_result is not None:
 
     # --- TAB 1: DASHBOARD ---
     with tab1:
-        # 1. Create columns inside the tab
+        # 1. Top Section: Columns
         col_kpi, col_gauge = st.columns([1, 1])
 
-        # 2. Fill the LEFT column
+        # Fill the LEFT column
         with col_kpi:
             st.subheader("Analysis Result")
             
-            # Status Box (Red/Orange/Green)
+            # Status Box
             if prob >= 0.60:
                 with st.container(border=True): 
                     st.error("### ⚠️ HIGH RISK DETECTED")
@@ -296,7 +296,6 @@ if st.session_state.risk_result is not None:
 
             st.markdown("---")
             
-            
             st.metric(
                 label="Zone Risk Score", 
                 value=f"{res['zone_risk']:.1%}", 
@@ -304,38 +303,38 @@ if st.session_state.risk_result is not None:
                 delta_color="off"
             )
 
-        # 3. Fill the RIGHT column
+        # Fill the RIGHT column
         with col_gauge:
             st.plotly_chart(create_gauge(prob), use_container_width=True)
 
 
-    st.markdown("---")
-    st.subheader("📋 Recommended Safety Actions")
-    
-    # Define advice based on risk level
-    if prob >= 0.60:
-        with st.expander("🚨 CRITICAL PRECAUTIONS (Click to Expand)", expanded=True):
-            st.markdown("""
-            * **Structural Check:** Immediately consult a structural engineer to inspect your building's integrity.
-            * **Emergency Kit:** Ensure a "Go Bag" is packed (water, non-perishable food, flashlight, first aid).
-            * **Drills:** Conduct earthquake drills with family/employees weekly.
-            * **Furniture:** Secure tall furniture (bookshelves, cabinets) to walls.
-            """)
-    elif prob >= 0.30:
-        with st.expander("⚠️ PRECAUTIONARY MEASURES (Click to Expand)", expanded=True):
-            st.markdown("""
-            * **Review Hazards:** Check for hanging objects above beds or workspaces.
-            * **Communication Plan:** Agree on a meeting point for your family in case of separation.
-            * **Supplies:** Maintain a 3-day supply of food and water.
-            """)
-    else:
-        with st.expander("✅ ROUTINE MAINTENANCE (Click to Expand)"):
-            st.markdown("""
-            * **Stay Informed:** Keep monitoring local PHIVOLCS advisories.
-            * **Standard Prep:** Keep a basic first aid kit accessible.
-            * **Insurance:** Review property insurance coverage for natural disasters.
-            """)
+        # 2. Bottom Section: Safety Actions (NOW INSIDE TAB 1)
+        # Note: These lines are indented to match 'col_kpi' and 'col_gauge'
+        st.markdown("---")
+        st.subheader("📋 Recommended Safety Actions")
         
+        if prob >= 0.60:
+            with st.expander("🚨 CRITICAL PRECAUTIONS (Click to Expand)", expanded=True):
+                st.markdown("""
+                * **Structural Check:** Immediately consult a structural engineer.
+                * **Emergency Kit:** Ensure a "Go Bag" is packed.
+                * **Drills:** Conduct earthquake drills weekly.
+                * **Furniture:** Secure tall furniture to walls.
+                """)
+        elif prob >= 0.30:
+            with st.expander("⚠️ PRECAUTIONARY MEASURES (Click to Expand)", expanded=True):
+                st.markdown("""
+                * **Review Hazards:** Check for hanging objects.
+                * **Communication Plan:** Agree on a meeting point.
+                * **Supplies:** Maintain a 3-day supply of food and water.
+                """)
+        else:
+            with st.expander("✅ ROUTINE MAINTENANCE (Click to Expand)"):
+                st.markdown("""
+                * **Stay Informed:** Keep monitoring PHIVOLCS advisories.
+                * **Standard Prep:** Keep a basic first aid kit accessible.
+                * **Insurance:** Review property insurance coverage.
+                """)
 
     # --- TAB 2: MAP ---
     with tab2:
