@@ -48,3 +48,16 @@ The model combines:
 2. Feature engineering with latitude, longitude, and depth-based features
 3. XGBoost classifier to predict high-risk areas
 4. Threshold optimization for balanced precision and recall
+
+## Members
+
+Dan Joshua Pamisa
+Department of Computer Engineering University of Science and Technology of Southern Philippines (USTP)
+Cagayan De Oro City, Philippines
+pamis.danjoshua89@gmail.com
+
+Asher Dreck Abian 
+Department of Computer Engineering University of Science and Technology of Southern Philippines (USTP)
+Cagayan De Oro City, Philippines
+abian.asher04@gmail.com
+
